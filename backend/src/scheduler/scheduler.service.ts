@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
 import { MonitoringService } from '../monitoring/monitoring.service';
 import { spawn } from 'child_process';
 import { join } from 'path';
+import { PrismaService } from '@/modules/prisma/prisma.service';
 
 @Injectable()
 export class SchedulerService implements OnModuleInit {
@@ -67,9 +67,7 @@ export class SchedulerService implements OnModuleInit {
 
     if (tenants.length === 0) return;
 
-    this.logger.log(
-      `Monitoring cron: checking ${tenants.length} tenant(s)`,
-    );
+    this.logger.log(`Monitoring cron: checking ${tenants.length} tenant(s)`);
 
     for (const tenant of tenants) {
       try {
@@ -94,9 +92,7 @@ export class SchedulerService implements OnModuleInit {
           `Monitoring complete for tenant ${tenant.id}, run ${latestRun.id}`,
         );
       } catch (err) {
-        this.logger.error(
-          `Monitoring failed for tenant ${tenant.id}: ${err}`,
-        );
+        this.logger.error(`Monitoring failed for tenant ${tenant.id}: ${err}`);
       }
     }
   }
@@ -158,10 +154,7 @@ export class SchedulerService implements OnModuleInit {
     });
   }
 
-  private async savePipelineSteps(
-    runId: string,
-    result: Record<string, any>,
-  ) {
+  private async savePipelineSteps(runId: string, result: Record<string, any>) {
     const entries = Object.entries(result).map(([stepName, outputJson]) => ({
       runId,
       stepName,

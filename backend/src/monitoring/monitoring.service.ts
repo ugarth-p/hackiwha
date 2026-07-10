@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
 import { spawn } from 'child_process';
 import { join } from 'path';
 import { RunMonitoringDto } from './monitoring.dto';
+import { PrismaService } from '@/modules/prisma/prisma.service';
 
 @Injectable()
 export class MonitoringService {

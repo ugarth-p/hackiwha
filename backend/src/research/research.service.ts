@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
 import { spawn } from 'child_process';
 import { join } from 'path';
 import { RunPipelineDto } from './research.dto';
+import { PrismaService } from '@/modules/prisma/prisma.service';
 
 @Injectable()
 export class ResearchService {
@@ -105,7 +105,9 @@ export class ResearchService {
           where: { id: runId },
           data: { status: 'failed', completedAt: new Date() },
         });
-        this.logger.error(`Pipeline run ${runId} failed (code ${code}): ${stderr}`);
+        this.logger.error(
+          `Pipeline run ${runId} failed (code ${code}): ${stderr}`,
+        );
       }
     });
 
@@ -118,10 +120,7 @@ export class ResearchService {
     });
   }
 
-  private async savePipelineSteps(
-    runId: string,
-    result: Record<string, any>,
-  ) {
+  private async savePipelineSteps(runId: string, result: Record<string, any>) {
     const entries = Object.entries(result).map(([stepName, outputJson]) => ({
       runId,
       stepName,
