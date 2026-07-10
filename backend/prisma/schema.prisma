@@ -1,0 +1,68 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Tenant {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                String
+  businessDescription String?
+  createdAt           DateTime @default(now()) @db.Timestamptz()
+
+  runs     PipelineRun[]
+  personas Persona[]
+  findings Finding[]
+}
+
+model PipelineRun {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId    String    @db.Uuid
+  status      String    @default("running") // running, completed, failed
+  triggeredBy String // schedule, manual
+  startedAt   DateTime  @default(now()) @db.Timestamptz()
+  completedAt DateTime? @db.Timestamptz()
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  steps  PipelineStep[]
+}
+
+model PipelineStep {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  runId       String    @db.Uuid
+  stepName    String // market_intel, competitor_recon, etc.
+  status      String    @default("pending") // pending, running, completed, failed
+  inputJson   Json?
+  outputJson  Json?
+  errorText   String?
+  startedAt   DateTime? @db.Timestamptz()
+  completedAt DateTime? @db.Timestamptz()
+
+  run PipelineRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model Persona {
+  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String  @db.Uuid
+  name         String
+  systemPrompt String
+  isDefault    Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Finding {
+  id        String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String                       @db.Uuid
+  source    String // market_intel, competitor_recon
+  content   String
+  // Prisma supports pgvector natively in newer versions using Unsupported
+  embedding Unsupported("vector(1536)")?
+  createdAt DateTime                     @default(now()) @db.Timestamptz()
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
