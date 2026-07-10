@@ -1,57 +1,56 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { PrismaService } from '../prisma.service';
 import { spawn } from 'child_process';
 import { join } from 'path';
-import { Tenant } from '../database/entities/tenant.entity';
-import { ResearchRun, RunStatus } from '../database/entities/research-run.entity';
-import { Finding } from '../database/entities/finding.entity';
 import { RunPipelineDto } from './research.dto';
 
 @Injectable()
 export class ResearchService {
   private readonly logger = new Logger(ResearchService.name);
 
-  constructor(
-    @InjectRepository(Tenant) private tenantRepo: Repository<Tenant>,
-    @InjectRepository(ResearchRun) private runRepo: Repository<ResearchRun>,
-    @InjectRepository(Finding) private findingRepo: Repository<Finding>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async runPipeline(dto: RunPipelineDto): Promise<ResearchRun> {
-    let tenant = await this.tenantRepo.findOneBy({ id: dto.tenantId });
-    if (!tenant) {
-      tenant = this.tenantRepo.create({
+  async runPipeline(dto: RunPipelineDto) {
+    const tenant = await this.prisma.tenant.upsert({
+      where: { id: dto.tenantId },
+      update: { businessDescription: dto.businessDescription },
+      create: {
         id: dto.tenantId,
+        name: dto.tenantId,
         businessDescription: dto.businessDescription,
-      });
-      await this.tenantRepo.save(tenant);
-    }
-
-    const run = this.runRepo.create({
-      tenantId: dto.tenantId,
-      status: RunStatus.RUNNING,
-      startedAt: new Date(),
+      },
     });
-    await this.runRepo.save(run);
+
+    const run = await this.prisma.pipelineRun.create({
+      data: {
+        tenantId: tenant.id,
+        status: 'running',
+        triggeredBy: 'manual',
+      },
+    });
 
     this.spawnWorker(run.id, dto);
 
     return run;
   }
 
-  async getRun(runId: string): Promise<ResearchRun> {
-    return this.runRepo.findOneOrFail({ where: { id: runId } });
+  async getRun(runId: string) {
+    return this.prisma.pipelineRun.findUniqueOrThrow({
+      where: { id: runId },
+      include: { steps: true },
+    });
   }
 
-  async getFindings(runId: string): Promise<Finding[]> {
-    return this.findingRepo.find({ where: { runId } });
+  async getFindings(runId: string) {
+    return this.prisma.finding.findMany({
+      where: { tenantId: runId },
+    });
   }
 
-  async getFindingsByTenant(tenantId: string): Promise<Finding[]> {
-    return this.findingRepo.find({
+  async getFindingsByTenant(tenantId: string) {
+    return this.prisma.finding.findMany({
       where: { tenantId },
-      order: { createdAt: 'DESC' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -63,9 +62,11 @@ export class ResearchService {
     });
 
     const input = JSON.stringify({
+      mode: 'pipeline',
       tenant_id: dto.tenantId,
       business_description: dto.businessDescription,
       known_competitors: dto.knownCompetitors ?? [],
+      run_id: runId,
     });
 
     python.stdin.write(input);
@@ -86,33 +87,52 @@ export class ResearchService {
       if (code === 0) {
         try {
           const result = JSON.parse(stdout);
-          await this.runRepo.update(runId, {
-            status: RunStatus.COMPLETED,
-            completedAt: new Date(),
+          await this.prisma.pipelineRun.update({
+            where: { id: runId },
+            data: { status: 'completed', completedAt: new Date() },
           });
+          await this.savePipelineSteps(runId, result);
           this.logger.log(`Pipeline run ${runId} completed`);
         } catch {
-          await this.runRepo.update(runId, {
-            status: RunStatus.FAILED,
-            completedAt: new Date(),
+          await this.prisma.pipelineRun.update({
+            where: { id: runId },
+            data: { status: 'failed', completedAt: new Date() },
           });
           this.logger.error(`Pipeline run ${runId} — failed to parse output`);
         }
       } else {
-        await this.runRepo.update(runId, {
-          status: RunStatus.FAILED,
-          completedAt: new Date(),
+        await this.prisma.pipelineRun.update({
+          where: { id: runId },
+          data: { status: 'failed', completedAt: new Date() },
         });
         this.logger.error(`Pipeline run ${runId} failed (code ${code}): ${stderr}`);
       }
     });
 
     python.on('error', async (err) => {
-      await this.runRepo.update(runId, {
-        status: RunStatus.FAILED,
-        completedAt: new Date(),
+      await this.prisma.pipelineRun.update({
+        where: { id: runId },
+        data: { status: 'failed', completedAt: new Date() },
       });
       this.logger.error(`Pipeline run ${runId} — spawn error: ${err.message}`);
     });
+  }
+
+  private async savePipelineSteps(
+    runId: string,
+    result: Record<string, any>,
+  ) {
+    const entries = Object.entries(result).map(([stepName, outputJson]) => ({
+      runId,
+      stepName,
+      status: 'completed' as const,
+      outputJson,
+      startedAt: new Date(),
+      completedAt: new Date(),
+    }));
+
+    if (entries.length > 0) {
+      await this.prisma.pipelineStep.createMany({ data: entries });
+    }
   }
 }
