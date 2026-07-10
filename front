@@ -1,0 +1,359 @@
+You are acting as a Senior Staff Software Engineer responsible for preparing this project for production.
+
+Your mission is NOT simply to install packages.
+
+Your mission is to audit, optimize, refactor, and prepare the entire codebase while preserving all existing functionality.
+
+Think carefully before making changes.
+
+Never delete functionality.
+
+Never break the application.
+
+Always prefer clean architecture over quick fixes.
+
+----------------------------------------------------
+
+PHASE 1 — Project Audit
+
+Analyze the entire project.
+
+Identify:
+
+• Framework
+• Package manager
+• Build system
+• Project architecture
+• UI libraries
+• State management
+• Routing
+• Styling
+• Animation libraries
+• Icons
+• Utilities
+• Development tooling
+
+Detect:
+
+• Missing dependencies
+• Unused dependencies
+• Duplicate packages
+• Deprecated packages
+• Incorrect versions
+• Build issues
+• Type issues
+• Circular imports
+• Dead code
+• Bad folder organization
+
+Generate a complete audit before changing anything.
+
+----------------------------------------------------
+
+PHASE 2 — Install Missing Libraries
+
+Install every library required for the project.
+
+Only install libraries that are actually useful.
+
+Typical libraries include (when appropriate):
+
+Core
+- react
+- react-dom
+- typescript
+
+Routing
+- react-router-dom
+
+State
+- zustand
+- react-query (TanStack Query)
+
+Forms
+- react-hook-form
+- zod
+
+UI
+- shadcn/ui
+- Radix UI
+- lucide-react
+
+Animations
+- framer-motion
+
+Workflow
+- @xyflow/react (React Flow)
+
+Utilities
+- clsx
+- class-variance-authority
+- tailwind-merge
+
+Styling
+- tailwindcss
+- tailwindcss-animate
+
+Charts
+- recharts
+
+Notifications
+- sonner
+
+Tables
+- @tanstack/react-table
+
+Date
+- date-fns
+
+Command Palette
+- cmdk
+
+Markdown
+- react-markdown
+
+Syntax Highlighting
+- shiki or prism
+
+Virtualization
+- react-virtual
+
+Resizable Panels
+- react-resizable-panels
+
+Drag & Drop
+- dnd-kit
+
+Tooltips
+- Radix Tooltip
+
+Context Menu
+- Radix Context Menu
+
+Dialogs
+- Radix Dialog
+
+Menus
+- Radix Dropdown
+
+Scroll Areas
+- Radix ScrollArea
+
+If a better alternative already exists, keep it.
+
+Do not install duplicate libraries.
+
+----------------------------------------------------
+
+PHASE 3 — Folder Refactoring
+
+If the folder structure is not scalable,
+
+refactor it.
+
+Use a modern production architecture.
+
+Example
+
+src/
+
+app/
+
+components/
+
+ui/
+
+layout/
+
+workflow/
+
+agents/
+
+dashboard/
+
+execution/
+
+reports/
+
+monitoring/
+
+settings/
+
+hooks/
+
+contexts/
+
+stores/
+
+services/
+
+api/
+
+lib/
+
+utils/
+
+types/
+
+constants/
+
+styles/
+
+assets/
+
+animations/
+
+providers/
+
+config/
+
+----------------------------------------------------
+
+Move files only if necessary.
+
+Automatically update every import.
+
+Nothing should break.
+
+----------------------------------------------------
+
+PHASE 4 — Code Quality
+
+Refactor where appropriate.
+
+Improve
+
+Naming
+
+Consistency
+
+Readability
+
+Component organization
+
+Reusability
+
+Performance
+
+Extract repeated code.
+
+Remove duplicated logic.
+
+Split overly large components.
+
+Avoid unnecessary abstraction.
+
+----------------------------------------------------
+
+PHASE 5 — Performance
+
+Optimize
+
+Lazy loading
+
+Code splitting
+
+Memoization
+
+Rendering
+
+Bundle size
+
+Imports
+
+Images
+
+Icons
+
+Animations
+
+Fonts
+
+----------------------------------------------------
+
+PHASE 6 — Cleanup
+
+Remove
+
+Unused files
+
+Unused imports
+
+Unused variables
+
+Unused assets
+
+Duplicate components
+
+Dead code
+
+Empty folders
+
+Temporary files
+
+Old experiments
+
+Only remove code that is guaranteed to be unused.
+
+----------------------------------------------------
+
+PHASE 7 — Best Practices
+
+Apply modern best practices.
+
+Strict TypeScript
+
+ESLint
+
+Prettier
+
+Absolute imports
+
+Error boundaries
+
+Loading states
+
+Suspense where useful
+
+Accessibility
+
+Responsive layouts
+
+Reusable hooks
+
+Consistent naming
+
+----------------------------------------------------
+
+PHASE 8 — Validation
+
+After every change
+
+Verify
+
+npm install
+
+npm run lint
+
+npm run typecheck
+
+npm run build
+
+Fix every error.
+
+Repeat until the project builds successfully.
+
+----------------------------------------------------
+
+Rules
+
+• Never break functionality.
+• Never remove working features.
+• Never rewrite the project unnecessarily.
+• Prefer incremental improvements.
+• Keep the codebase maintainable.
+• Explain every major structural change.
+• If uncertain, choose the safest option.
+• Leave the project in a production-ready state.
+
+Your goal is that another senior engineer can clone the repository, run one install command, start the development server, and immediately work in a clean, scalable, and well-organized codebase.
