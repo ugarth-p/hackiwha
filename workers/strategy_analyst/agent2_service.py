@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 from prompt import SYSTEM_PROMPT
 from schemas import Agent2Input, Agent2Output
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3-flash-preview"
 DATA_DIR = Path(__file__).parent
 
 load_dotenv(DATA_DIR / ".env")

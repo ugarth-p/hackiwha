@@ -1,21 +1,21 @@
-from openai import OpenAI
+from google import genai
 
 from config import settings
 
 _client = None
 
 
-def _get_client() -> OpenAI:
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        _client = OpenAI(api_key=settings.openai_api_key)
+        _client = genai.Client(api_key=settings.gemini_embedding_api_key)
     return _client
 
 
 def get_embedding(text: str) -> list[float]:
     client = _get_client()
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=text,
+    response = client.models.embed_content(
+        model="gemini-embedding-2",
+        contents=text,
     )
-    return response.data[0].embedding
+    return response.embeddings[0].values

@@ -3,7 +3,7 @@ import sys
 from typing import Any
 
 from config import settings
-from db import create_run, update_run
+from db import create_run
 
 
 def _parse_input() -> dict[str, Any]:
@@ -19,7 +19,6 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
 
     from scraping.agent import run as run_market_intel
     from analysis.agent import run as run_competitor_recon
-    from strategy.agent import run as run_strategy
 
     results: dict[str, Any] = {}
 
@@ -37,18 +36,8 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
     except Exception as e:
         results["competitor_recon"] = {"error": str(e)}
 
-    try:
-        results["strategy_output"] = run_strategy(
-            tenant_id,
-            business_description,
-            run_id,
-            market_intel=results.get("market_intelligence"),
-            competitor_recon=results.get("competitor_recon"),
-        )
-    except Exception as e:
-        results["strategy_output"] = {"error": str(e)}
-
-    update_run(run_id, "completed")
+    results["strategy_output"] = {"error": str(
+        "Strategy agent not implemented yet")}
 
     return results
 

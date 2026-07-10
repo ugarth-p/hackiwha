@@ -60,10 +60,11 @@ model Persona {
 model Finding {
   id        String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenantId  String                       @db.Uuid
+  runId     String?                      @db.Uuid
   source    String // market_intel, competitor_recon
   content   String
   // Prisma supports pgvector natively in newer versions using Unsupported
-  embedding Unsupported("vector(1536)")?
+  embedding Unsupported("vector(3072)")?
   createdAt DateTime                     @default(now()) @db.Timestamptz()
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)

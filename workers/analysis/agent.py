@@ -2,15 +2,16 @@ import json
 import sys
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
 from pydantic import BaseModel, Field
 
 from config import settings
 from db import ensure_tenant, store_finding
 from embeddings import get_embedding
+from retry import generate_with_retry
 from tools import web_fetch, web_search
 
-genai.configure(api_key=settings.gemini_api_key)
+_client = genai.Client(api_key=settings.gemini_api_key)
 
 SYSTEM_PROMPT = """You are a Competitor Reconnaissance Agent. Your job is to research specific competitors in a market.
 
@@ -28,8 +29,6 @@ Always use the web_search tool to find real data."""
 COMPETITOR_SEARCH_TEMPLATES = [
     "{name} pricing plans cost",
     "{name} reviews sentiment user feedback 2024 2025",
-    "{name} news updates recent launches",
-    "{name} product features positioning",
 ]
 
 
@@ -37,7 +36,6 @@ def _discover_competitors(business_description: str) -> list[str]:
     results = web_search(f"{business_description} top competitors companies", max_results=5)
     context = "\n".join(f"[{r['title']}] {r['content']}" for r in results)
 
-    model = genai.GenerativeModel(model_name="gemini-2.0-flash")
     prompt = f"""Given this business description: {business_description}
 
 And these search results:
@@ -46,8 +44,12 @@ And these search results:
 List the top 3-5 most relevant competitor company names.
 Respond with ONLY a JSON array of strings, e.g. ["Company A", "Company B", "Company C"]"""
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    raw = generate_with_retry(
+        _client,
+        model="gemini-3-flash-preview",
+        contents=prompt,
+    )
+    raw = raw.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     return json.loads(raw)
@@ -76,11 +78,6 @@ def _research_competitor(name: str) -> dict[str, Any]:
 
     context = "\n\n".join(f"[{r['title']}]({r['url']})\n{r['content']}" for r in collected)
 
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SYSTEM_PROMPT,
-    )
-
     prompt = f"""Research the competitor: {name}
 
 Gathered data:
@@ -97,8 +94,15 @@ Respond with valid JSON matching this exact schema:
   "sources": ["url", "..."] - URLs of sources used
 }}"""
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    raw = generate_with_retry(
+        _client,
+        model="gemini-3-flash-preview",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+        ),
+    )
+    raw = raw.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     return json.loads(raw)
@@ -127,6 +131,8 @@ def run(
 
     if not known_competitors:
         known_competitors = _discover_competitors(business_description)
+
+    known_competitors = known_competitors[:3]
 
     competitors = []
     all_sources: list[str] = []

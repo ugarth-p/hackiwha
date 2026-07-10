@@ -1,11 +1,12 @@
 import json
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
 
 from config import settings
+from retry import generate_with_retry
 
-genai.configure(api_key=settings.gemini_api_key)
+_client = genai.Client(api_key=settings.gemini_api_key)
 
 SYSTEM_PROMPT = """You are a Brand Strategy Agent. Given market intelligence and competitor research, develop an actionable marketing strategy.
 
@@ -38,11 +39,6 @@ def run(
 
     context = "\n\n".join(context_parts) if context_parts else "No research data available."
 
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SYSTEM_PROMPT,
-    )
-
     prompt = f"""Business: {business_description}
 
 {context}
@@ -56,8 +52,15 @@ Respond with valid JSON:
   "recommended_actions": ["string", "..."] - list of specific actions
 }}"""
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    raw = generate_with_retry(
+        _client,
+        model="gemini-3-flash-preview",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+        ),
+    )
+    raw = raw.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     return json.loads(raw)

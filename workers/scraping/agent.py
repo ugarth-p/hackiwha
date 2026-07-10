@@ -2,15 +2,16 @@ import json
 import sys
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
 from pydantic import BaseModel, Field
 
 from config import settings
 from db import ensure_tenant, store_finding
 from embeddings import get_embedding
+from retry import generate_with_retry
 from tools import web_fetch, web_search
 
-genai.configure(api_key=settings.gemini_api_key)
+_client = genai.Client(api_key=settings.gemini_api_key)
 
 SYSTEM_PROMPT = """You are a Market Intelligence Agent. Your job is to research the GENERAL MARKET for a given business description.
 
@@ -30,8 +31,6 @@ SEARCH_QUERIES_TEMPLATE = [
     "{business} industry market size growth 2024 2025",
     "{business} pricing models revenue streams",
     "{business} customer pain points complaints",
-    "{business} market trends emerging technology",
-    "{business} regulations compliance requirements",
 ]
 
 
@@ -71,11 +70,6 @@ def _build_search_context(business_description: str) -> str:
 
 
 def _synthesize(business_description: str, search_context: str) -> dict[str, Any]:
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SYSTEM_PROMPT,
-    )
-
     prompt = f"""Research the market for: {business_description}
 
 Here is the gathered research data:
@@ -92,8 +86,15 @@ Respond with valid JSON matching this exact schema:
   "sources": ["url", "..."] - list of source URLs used
 }}"""
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    raw = generate_with_retry(
+        _client,
+        model="gemini-3-flash-preview",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+        ),
+    )
+    raw = raw.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     return json.loads(raw)

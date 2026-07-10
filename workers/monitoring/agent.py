@@ -2,12 +2,13 @@ import json
 import re
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
 from pydantic import BaseModel, Field
 
 from config import settings
+from retry import generate_with_retry
 
-genai.configure(api_key=settings.gemini_api_key)
+_client = genai.Client(api_key=settings.gemini_api_key)
 
 SIGNIFICANT_THRESHOLD = 0.10
 
@@ -264,19 +265,21 @@ def _rule_based_comparison(
 def _llm_explain(
     current: dict[str, Any], previous: dict[str, Any], deltas: list[str]
 ) -> dict[str, str]:
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
-        system_instruction=SYSTEM_PROMPT,
-    )
-
     prompt = LLM_PROMPT_TEMPLATE.format(
         current=json.dumps(current, indent=2),
         previous=json.dumps(previous, indent=2),
         deltas=json.dumps(deltas, indent=2),
     )
 
-    response = model.generate_content(prompt)
-    raw = response.text.strip()
+    raw = generate_with_retry(
+        _client,
+        model="gemini-3-flash-preview",
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+        ),
+    )
+    raw = raw.strip()
     if raw.startswith("```"):
         raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
     return json.loads(raw)

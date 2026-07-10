@@ -56,7 +56,7 @@ The 10% threshold is a global constant `SIGNIFICANT_THRESHOLD = 0.10` in `worker
 
 ## LLM Usage
 
-- **Model:** `gemini-2.0-flash` via `google.generativeai`
+- **Model:** `gemini-3-flash-preview` via `google.generativeai`
 - **When:** Only when `significant_change_detected == true` AND deltas exist
 - **Prompt:** Sends current data, previous data, and detected deltas
 - **Response:** Parsed as JSON -> `alert_message` + `concept_for_validation`

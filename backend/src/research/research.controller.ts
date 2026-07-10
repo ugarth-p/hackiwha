@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ResearchService } from './research.service';
 import { RunPipelineDto } from './research.dto';
 

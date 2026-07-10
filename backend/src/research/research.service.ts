@@ -55,9 +55,11 @@ export class ResearchService {
   }
 
   private spawnWorker(runId: string, dto: RunPipelineDto): void {
-    const workerPath = join(__dirname, '..', '..', '..', 'workers', 'main.py');
-    const python = spawn('python3', [workerPath], {
-      cwd: join(__dirname, '..', '..', '..', 'workers'),
+    const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+    const workerPath = join(workersDir, 'main.py');
+    const pythonBin = join(workersDir, '.venv', 'bin', 'python3');
+    const python = spawn(pythonBin, [workerPath], {
+      cwd: workersDir,
       env: { ...process.env },
     });
 
@@ -83,49 +85,60 @@ export class ResearchService {
       stderr += data.toString();
     });
 
-    python.on('close', async (code) => {
-      if (code === 0) {
-        try {
-          const result = JSON.parse(stdout);
-          await this.prisma.pipelineRun.update({
-            where: { id: runId },
-            data: { status: 'completed', completedAt: new Date() },
-          });
-          await this.savePipelineSteps(runId, result);
-          this.logger.log(`Pipeline run ${runId} completed`);
-        } catch {
+    python.on('close', (code) => {
+      const handleClose = async () => {
+        if (code === 0) {
+          try {
+            const result = JSON.parse(stdout) as Record<string, unknown>;
+            await this.prisma.pipelineRun.update({
+              where: { id: runId },
+              data: { status: 'completed', completedAt: new Date() },
+            });
+            await this.savePipelineSteps(runId, result);
+            this.logger.log(`Pipeline run ${runId} completed`);
+          } catch {
+            await this.prisma.pipelineRun.update({
+              where: { id: runId },
+              data: { status: 'failed', completedAt: new Date() },
+            });
+            this.logger.error(`Pipeline run ${runId} — failed to parse output`);
+          }
+        } else {
           await this.prisma.pipelineRun.update({
             where: { id: runId },
             data: { status: 'failed', completedAt: new Date() },
           });
-          this.logger.error(`Pipeline run ${runId} — failed to parse output`);
+          this.logger.error(
+            `Pipeline run ${runId} failed (code ${code}): ${stderr}`,
+          );
         }
-      } else {
+      };
+      void handleClose();
+    });
+
+    python.on('error', (err) => {
+      const handleError = async () => {
         await this.prisma.pipelineRun.update({
           where: { id: runId },
           data: { status: 'failed', completedAt: new Date() },
         });
         this.logger.error(
-          `Pipeline run ${runId} failed (code ${code}): ${stderr}`,
+          `Pipeline run ${runId} — spawn error: ${err.message}`,
         );
-      }
-    });
-
-    python.on('error', async (err) => {
-      await this.prisma.pipelineRun.update({
-        where: { id: runId },
-        data: { status: 'failed', completedAt: new Date() },
-      });
-      this.logger.error(`Pipeline run ${runId} — spawn error: ${err.message}`);
+      };
+      void handleError();
     });
   }
 
-  private async savePipelineSteps(runId: string, result: Record<string, any>) {
+  private async savePipelineSteps(
+    runId: string,
+    result: Record<string, unknown>,
+  ) {
     const entries = Object.entries(result).map(([stepName, outputJson]) => ({
       runId,
       stepName,
       status: 'completed' as const,
-      outputJson,
+      outputJson: outputJson as object,
       startedAt: new Date(),
       completedAt: new Date(),
     }));
