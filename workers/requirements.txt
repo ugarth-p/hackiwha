@@ -1,0 +1,3 @@
+google-generativeai
+pydantic
+pydantic-settings
