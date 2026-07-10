@@ -29,4 +29,12 @@ export class MonitoringController {
   async getResultHistory(@Param('tenantId') tenantId: string) {
     return this.monitoringService.getResultHistory(tenantId);
   }
+
+  @Get('preview/:tenantId/:runId')
+  async getPreview(
+    @Param('tenantId') tenantId: string,
+    @Param('runId') runId: string,
+  ) {
+    return this.monitoringService.getPreview(tenantId, runId);
+  }
 }

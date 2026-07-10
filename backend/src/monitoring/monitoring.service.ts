@@ -53,6 +53,14 @@ export class MonitoringService {
       },
     });
 
+    let suggestions = null;
+    if (dto.approved === false) {
+      suggestions = await this.spawnSuggestionsWorker(
+        currentData.strategy_output ?? {},
+        dto.feedback ?? '',
+      );
+    }
+
     const intervalMs = parseInt(
       process.env.MONITORING_INTERVAL_MS || String(24 * 60 * 60 * 1000),
     );
@@ -61,11 +69,27 @@ export class MonitoringService {
       data: { nextRunAt: new Date(Date.now() + intervalMs) },
     });
 
-    return saved;
+    return { ...saved, suggestions };
   }
 
   async runMonitoringForTenant(tenantId: string, currentRunId: string) {
     return this.runMonitoring({ tenantId, currentRunId });
+  }
+
+  async getPreview(tenantId: string, runId: string) {
+    const run = await this.prisma.pipelineRun.findUniqueOrThrow({
+      where: { id: runId },
+      include: { steps: true },
+    });
+
+    if (run.tenantId !== tenantId) {
+      throw new Error('Run does not belong to this tenant');
+    }
+
+    const strategyStep = run.steps.find(s => s.stepName === 'strategy_output');
+    const strategyOutput = strategyStep?.outputJson ?? {};
+
+    return { tenantId, runId, strategyOutput };
   }
 
   async getLatestResult(tenantId: string) {
@@ -92,6 +116,44 @@ export class MonitoringService {
       }
     }
     return outputs;
+  }
+
+  private spawnSuggestionsWorker(
+    strategyOutput: Record<string, any>,
+    feedback: string,
+  ): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const workerPath = join(__dirname, '..', '..', '..', 'workers', 'main.py');
+      const python = spawn('python3', [workerPath], {
+        cwd: join(__dirname, '..', '..', '..', 'workers'),
+        env: { ...process.env },
+      });
+
+      const payload = JSON.stringify({
+        mode: 'suggestions',
+        strategy_output: strategyOutput,
+        feedback,
+      });
+      python.stdin.write(payload);
+      python.stdin.end();
+
+      let stdout = '';
+      let stderr = '';
+
+      python.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
+      python.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+      python.on('close', (code) => {
+        if (code === 0) {
+          try { resolve(JSON.parse(stdout)); }
+          catch { reject(new Error(`Failed to parse suggestions output: ${stdout}`)); }
+        } else {
+          reject(new Error(`Suggestions worker failed (code ${code}): ${stderr}`));
+        }
+      });
+
+      python.on('error', reject);
+    });
   }
 
   private spawnMonitoringWorker(inputData: Record<string, any>): Promise<any> {

@@ -247,3 +247,41 @@ def run(
             result.concept_for_validation = "Review the detected changes manually."
 
     return result.model_dump()
+
+
+SUGGESTIONS_SYSTEM_PROMPT = """You are a strategic business analyst. A user reviewed a strategy output and rejected it.
+Analyze the strategy and explain what could be improved. Be specific and actionable."""
+
+SUGGESTIONS_PROMPT_TEMPLATE = """A user reviewed the following strategy output and was not satisfied.
+
+STRATEGY OUTPUT:
+{strategy_output}
+
+USER FEEDBACK (if any):
+{feedback}
+
+Analyze what's wrong with this strategy and suggest specific modifications.
+Respond with valid JSON:
+{{
+  "suggestions": "string - specific, actionable suggestions for improving the strategy"
+}}"""
+
+
+def generate_suggestions(
+    strategy_output: dict[str, Any], feedback: str = ""
+) -> dict[str, str]:
+    model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction=SUGGESTIONS_SYSTEM_PROMPT,
+    )
+
+    prompt = SUGGESTIONS_PROMPT_TEMPLATE.format(
+        strategy_output=json.dumps(strategy_output, indent=2),
+        feedback=feedback or "No specific feedback provided.",
+    )
+
+    response = model.generate_content(prompt)
+    raw = response.text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+    return json.loads(raw)

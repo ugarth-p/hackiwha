@@ -60,6 +60,12 @@ if __name__ == "__main__":
 
     if mode == "monitoring":
         result = run_monitoring(input_data)
+    elif mode == "suggestions":
+        from monitoring.agent import generate_suggestions
+
+        strategy_output = input_data.get("strategy_output", {})
+        feedback = input_data.get("feedback", "")
+        result = generate_suggestions(strategy_output, feedback)
     else:
         result = run_pipeline(input_data)
 

@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class RunMonitoringDto {
   @IsString()
@@ -6,6 +6,14 @@ export class RunMonitoringDto {
 
   @IsString()
   currentRunId: string;
+
+  @IsOptional()
+  @IsBoolean()
+  approved?: boolean = true;
+
+  @IsOptional()
+  @IsString()
+  feedback?: string;
 }
 
 export class MonitoringResultResponseDto {
