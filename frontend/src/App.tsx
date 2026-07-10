@@ -381,7 +381,37 @@ function CronReturnConnector({ active }: { active: boolean }) {
   )
 }
 
+type JudgePersonaKey = "strategist" | "analyst" | "critic" | "operator" | "mediator"
+
+const judgePersonaOptions: Array<{ value: JudgePersonaKey; label: string }> = [
+  { value: "strategist", label: "Strategist" },
+  { value: "analyst", label: "Analyst" },
+  { value: "critic", label: "Critic" },
+  { value: "operator", label: "Operator" },
+  { value: "mediator", label: "Mediator" },
+]
+
+const judgePersonaDescriptions: Record<JudgePersonaKey, string> = {
+  strategist: "Frames the broadest path forward and keeps the brand outcome in focus.",
+  analyst: "Breaks the brief into evidence, structure, and measurable constraints.",
+  critic: "Pushes on weak spots, hidden assumptions, and execution gaps.",
+  operator: "Converts conclusions into a practical delivery plan.",
+  mediator: "Balances the strongest points and resolves the disagreements.",
+}
+
 function JudgeEvaluatorTrio({ visible }: { visible: boolean }) {
+  const [selectedPersonas, setSelectedPersonas] = useState<JudgePersonaKey[]>([
+    "strategist",
+    "analyst",
+    "critic",
+  ])
+
+  useEffect(() => {
+    if (visible) {
+      setSelectedPersonas(["strategist", "analyst", "critic"])
+    }
+  }, [visible])
+
   if (!visible) {
     return null
   }
@@ -389,18 +419,21 @@ function JudgeEvaluatorTrio({ visible }: { visible: boolean }) {
   const evaluators = [
     {
       name: "Evaluator Alpha",
+      defaultPersona: "strategist" as JudgePersonaKey,
       summary: "Pros: strong brand fit. Cons: proof points need tightening.",
       critique: "Critiques Beta for underplaying clarity.",
       conclusion: "Refined conclusion: proceed with guardrails.",
     },
     {
       name: "Evaluator Beta",
+      defaultPersona: "analyst" as JudgePersonaKey,
       summary: "Pros: differentiated positioning. Cons: execution risk remains.",
       critique: "Critiques Gamma for being too conservative on timing.",
       conclusion: "Refined conclusion: keep the concept, sharpen delivery.",
     },
     {
       name: "Evaluator Gamma",
+      defaultPersona: "critic" as JudgePersonaKey,
       summary: "Pros: high strategic confidence. Cons: rollout needs discipline.",
       critique: "Critiques Alpha for being slightly over-optimistic.",
       conclusion: "Refined conclusion: approve after minor revisions.",
@@ -429,6 +462,30 @@ function JudgeEvaluatorTrio({ visible }: { visible: boolean }) {
           >
             <div className="judge-evaluator-mini-label">Connected Evaluator</div>
             <div className="judge-evaluator-mini-name">{evaluator.name}</div>
+            <label className="judge-evaluator-select-wrap">
+              <span className="judge-evaluator-select-label">Character</span>
+              <select
+                className="judge-evaluator-select"
+                value={selectedPersonas[index]}
+                onChange={(event) => {
+                  const nextValue = event.target.value as JudgePersonaKey
+                  setSelectedPersonas((currentValues) =>
+                    currentValues.map((value, currentIndex) =>
+                      currentIndex === index ? nextValue : value
+                    )
+                  )
+                }}
+              >
+                {judgePersonaOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="judge-evaluator-persona-copy">
+              {judgePersonaDescriptions[selectedPersonas[index]]}
+            </p>
             <p className="judge-evaluator-mini-text">{evaluator.summary}</p>
             <p className="judge-evaluator-mini-text">{evaluator.critique}</p>
             <p className="judge-evaluator-mini-conclusion">{evaluator.conclusion}</p>
@@ -617,7 +674,7 @@ export function App() {
     completedCount === stages.length ? "Relaunch Sequence" : "Launch Sequence"
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white text-black">
+    <div className="min-h-screen overflow-x-hidden bg-[#f5f5f5] text-black">
       <div className="aether-backdrop" />
 
       <aside className="aether-sidebar">
