@@ -1,0 +1,64 @@
+{
+  "patterns": [
+    {
+      "name": "freemium-gate",
+      "description": "Offer a generous free tier to drive adoption, gate advanced features behind paid plans to convert power users."
+    },
+    {
+      "name": "usage-based-pricing",
+      "description": "Charge based on actual usage (seats, API calls, storage) so customers pay proportionally to value received."
+    },
+    {
+      "name": "viral-referral-loop",
+      "description": "Build sharing into the product workflow so every user action potentially exposes the product to non-users."
+    },
+    {
+      "name": "land-and-expand",
+      "description": "Start with a small foothold in an account (single team or department) and expand organically as the value becomes visible."
+    },
+    {
+      "name": "switching-cost-lock-in",
+      "description": "Increase switching costs through data accumulation, integrations, and workflow dependencies so churn becomes painful."
+    },
+    {
+      "name": "ecosystem-play",
+      "description": "Build a marketplace or integration ecosystem that makes the product a platform, not just a tool."
+    },
+    {
+      "name": "vertical-solution",
+      "description": "Tailor the product deeply for a specific industry or use case rather than competing on breadth."
+    },
+    {
+      "name": "community-led-growth",
+      "description": "Invest in community (forums, events, user groups) so that user relationships and knowledge-sharing drive retention and acquisition."
+    },
+    {
+      "name": "content-seo-moat",
+      "description": "Create high-value educational content that ranks on search, becoming the go-to resource and driving organic inbound leads."
+    },
+    {
+      "name": "ai-assisted-workflow",
+      "description": "Embed AI into core workflows to automate repetitive tasks, reduce friction, and create a defensible experience competitors can't easily copy."
+    },
+    {
+      "name": "tiered-enterprise",
+      "description": "Offer clear tiers (starter, pro, enterprise) with increasing security, support, and compliance features to capture different buyer personas."
+    },
+    {
+      "name": "open-source-core",
+      "description": "Release the core product as open source to build trust and community, then monetize managed hosting, enterprise features, or support."
+    },
+    {
+      "name": "gamification-loop",
+      "description": "Add progress bars, streaks, achievements, or leaderboards to increase engagement and habit formation."
+    },
+    {
+      "name": "partnership-distribution",
+      "description": "Partner with complementary tools or platforms to access their user base through co-marketing, integrations, or bundled offerings."
+    },
+    {
+      "name": "retention-first-monetization",
+      "description": "Prioritize engagement and retention metrics over immediate revenue; optimize for long-term LTV before turning on aggressive monetization."
+    }
+  ]
+}
