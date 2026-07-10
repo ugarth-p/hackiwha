@@ -1,0 +1,91 @@
+{
+  "client": {
+    "name": "FreelanceFlow",
+    "description": "A project management and invoicing platform built specifically for independent freelancers and small creative studios.",
+    "current_pricing": "Free (1 project), Pro $12/mo (unlimited), Studio $24/mo (team features)",
+    "features": [
+      "Project boards with Kanban and timeline views",
+      "Integrated invoicing with Stripe payments",
+      "Time tracking with automatic timesheet generation",
+      "Client portal for approvals and feedback",
+      "AI-powered scope estimation",
+      "Basic file sharing (5GB free)"
+    ],
+    "target_audience": "Solo freelancers and micro-studios (1-5 people) in creative fields: designers, developers, writers, consultants"
+  },
+  "competitors": [
+    {
+      "name": "Asana",
+      "pricing": "Starter $10.99/user/mo, Advanced $24.99/user/mo, Enterprise custom",
+      "strengths": [
+        "Deep integrations ecosystem (200+ apps)",
+        "Strong enterprise adoption and brand recognition",
+        "Advanced reporting and workload management",
+        "Robust API for custom workflows"
+      ],
+      "weaknesses": [
+        "No invoicing or billing features",
+        "Per-user pricing becomes expensive for small teams",
+        "Complex onboarding for solo users",
+        "No built-in time tracking"
+      ],
+      "market_share": "~15% of project management SaaS market"
+    },
+    {
+      "name": "Trello",
+      "pricing": "Free (unlimited cards), Standard $5/user/mo, Premium $10/user/mo, Enterprise $17.50/user/mo",
+      "strengths": [
+        "Intuitive drag-and-drop Kanban boards",
+        "Low learning curve, loved by non-technical users",
+        "Power-Ups for extending functionality",
+        "Strong free tier"
+      ],
+      "weaknesses": [
+        "Limited to Kanban — no timeline, Gantt, or workload views",
+        "No invoicing, contracts, or client-facing features",
+        "Scaling issues for complex projects",
+        "Limited reporting and analytics"
+      ],
+      "market_share": "~10% of project management SaaS market"
+    },
+    {
+      "name": "Bonsai",
+      "pricing": "Free (limited), Starter $21/mo, Professional $32/mo, Business $66/mo",
+      "strengths": [
+        "All-in-one for freelancers: contracts, proposals, invoicing, time tracking",
+        "Contract templates with e-signatures",
+        "Tax preparation and expense tracking",
+        "Built specifically for freelance workflow"
+      ],
+      "weaknesses": [
+        "Project management features are basic compared to Asana/Trello",
+        "Higher price point for full feature set",
+        "Limited collaboration for teams",
+        "Smaller integration ecosystem",
+        "No AI-powered features"
+      ],
+      "market_share": "~2% of project management SaaS market, leading in freelancer-specific niche"
+    }
+  ],
+  "market": {
+    "industry": "Project Management & Freelancer Tools SaaS",
+    "market_size": "$7.2B (2025), projected $11.8B by 2028",
+    "growth_rate": "13.5% CAGR",
+    "trends": [
+      "AI-assisted project planning and scope estimation becoming table stakes",
+      "Freelancer workforce growing 25% YoY — 76M freelancers in US alone",
+      "Shift toward all-in-one platforms over best-of-breed point solutions",
+      "Increasing demand for client-facing portals and collaboration features",
+      "Usage-based and outcome-based pricing gaining traction over per-seat models"
+    ]
+  },
+  "user_sentiment": [
+    "FreelanceFlow users love the invoicing integration — 'Finally I don't need a separate app for billing'",
+    "Common complaint: 'I wish the project management was as good as Asana's — FreelanceFlow feels limited for complex projects'",
+    "Power users request: 'Please add Gantt charts and resource planning'",
+    "Positive: 'The AI scope estimation saved me from underquoting twice this month'",
+    "Negative: 'Only 5GB of file storage is not enough for designers sharing large PSD files'",
+    "Positive: 'Client portal is a game changer — clients stop emailing me for updates'",
+    "Negative: 'No mobile app yet, I manage everything from my phone'"
+  ]
+}
