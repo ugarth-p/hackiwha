@@ -1,5 +1,6 @@
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from google import genai
@@ -134,23 +135,27 @@ def run(
 
     known_competitors = known_competitors[:3]
 
-    competitors = []
-    all_sources: list[str] = []
-    for name in known_competitors:
+    def _research_one(name: str) -> CompetitorOutput:
         try:
             raw = _research_competitor(name)
-            validated = CompetitorOutput(**raw)
-            competitors.append(validated)
-            for s in validated.sources:
-                if s not in all_sources:
-                    all_sources.append(s)
+            return CompetitorOutput(**raw)
         except Exception as e:
-            competitors.append(
-                CompetitorOutput(
-                    name=name,
-                    pricing_notes=f"Error researching: {e}",
-                )
+            return CompetitorOutput(
+                name=name,
+                pricing_notes=f"Error researching: {e}",
             )
+
+    competitors: list[CompetitorOutput] = []
+    with ThreadPoolExecutor(max_workers=min(len(known_competitors), 3)) as pool:
+        futures = {pool.submit(_research_one, name): name for name in known_competitors}
+        for future in as_completed(futures):
+            competitors.append(future.result())
+
+    all_sources: list[str] = []
+    for c in competitors:
+        for s in c.sources:
+            if s not in all_sources:
+                all_sources.append(s)
 
     output = CompetitorReconOutput(competitors=competitors)
 

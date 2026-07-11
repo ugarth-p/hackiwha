@@ -1,5 +1,6 @@
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from config import settings
@@ -29,21 +30,25 @@ def run_pipeline(input_data: dict[str, Any]) -> None:
     market_intel: dict[str, Any] = {}
     competitor_recon: dict[str, Any] = {}
 
-    try:
-        market_intel = run_market_intel(
-            tenant_id, business_description, run_id
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        future_mi = pool.submit(
+            run_market_intel, tenant_id, business_description, run_id
         )
-    except Exception as e:
-        market_intel = {"error": str(e)}
-    _emit("market_intelligence", market_intel)
+        future_cr = pool.submit(
+            run_competitor_recon, tenant_id, business_description, run_id, known_competitors
+        )
 
-    try:
-        competitor_recon = run_competitor_recon(
-            tenant_id, business_description, run_id, known_competitors
-        )
-    except Exception as e:
-        competitor_recon = {"error": str(e)}
-    _emit("competitor_recon", competitor_recon)
+        try:
+            market_intel = future_mi.result()
+        except Exception as e:
+            market_intel = {"error": str(e)}
+        _emit("market_intelligence", market_intel)
+
+        try:
+            competitor_recon = future_cr.result()
+        except Exception as e:
+            competitor_recon = {"error": str(e)}
+        _emit("competitor_recon", competitor_recon)
 
     if "error" not in market_intel and "error" not in competitor_recon:
         try:

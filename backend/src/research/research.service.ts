@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { join } from 'path';
 import { Subject } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { RunPipelineDto } from './research.dto';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 
@@ -21,7 +22,7 @@ export class ResearchService {
   constructor(private prisma: PrismaService) {}
 
   getRunEvents(runId: string) {
-    return this.pipelineEvents$.asObservable();
+    return this.pipelineEvents$.pipe(filter((e) => e.runId === runId));
   }
 
   async runPipeline(dto: RunPipelineDto) {
