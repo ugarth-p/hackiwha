@@ -25,6 +25,8 @@ RUN apt-get update && \
         postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
+RUN npm install -g pnpm
+
 WORKDIR /app
 
 # Copy built NestJS app
@@ -32,6 +34,11 @@ COPY --from=builder /app/dist ./dist/
 COPY --from=builder /app/node_modules ./node_modules/
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma/
+COPY backend/prisma.config.ts ./prisma.config.ts
+
+# Fix Prisma 7 generated client: tsc with moduleResolution "nodenext" preserves
+# .ts extensions in require() paths, but the compiled files are .js
+RUN find dist/src/generated -name '*.js' -exec sed -i "s/\.ts'/\.js'/g; s/\.ts\"/\.js\"/g" {} +
 
 # Copy Python workers
 COPY workers/ ./workers/
