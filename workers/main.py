@@ -57,8 +57,14 @@ def run_monitoring(input_data: dict[str, Any]) -> dict[str, Any]:
     current_data = input_data.get("current_run_data", {})
     previous_data = input_data.get("previous_run_data")
     tenant_id = input_data.get("tenant_id", "")
+    current_run_id = input_data.get("current_run_id", "")
+    previous_run_id = input_data.get("previous_run_id", "")
 
-    return run_monitoring_agent(current_data, previous_data, tenant_id)
+    return run_monitoring_agent(
+        current_data, previous_data, tenant_id,
+        current_run_id=current_run_id,
+        previous_run_id=previous_run_id,
+    )
 
 
 if __name__ == "__main__":

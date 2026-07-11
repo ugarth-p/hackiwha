@@ -1,7 +1,8 @@
 """See what the monitoring agent detects between two runs.
 
-    python tests/try_monitoring.py                # identical runs — no changes
-    python tests/try_monitoring.py --with-changes  # adds a new competitor + trend shift
+    python tests/try_monitoring.py                         # identical runs, rule-based only
+    python tests/try_monitoring.py --with-changes           # adds a new competitor + trend shift
+    python tests/try_monitoring.py --live <curr_id> <prev_id>  # full embedding comparison from DB
 """
 import json
 import sys
@@ -44,20 +45,37 @@ def make_current(with_changes: bool = False) -> dict:
 
 
 def main():
-    with_changes = "--with-changes" in sys.argv
-    label = "WITH CHANGES" if with_changes else "IDENTICAL RUNS"
+    if "--live" in sys.argv:
+        idx = sys.argv.index("--live")
+        if idx + 2 >= len(sys.argv):
+            print("Usage: python tests/try_monitoring.py --live <current_run_id> <previous_run_id>")
+            sys.exit(1)
+        curr_id = sys.argv[idx + 1]
+        prev_id = sys.argv[idx + 2]
 
-    previous = json.loads((FIXTURES / "monitoring_previous.json").read_text())
-    current = make_current(with_changes)
+        result = run(
+            current_run_data={},
+            previous_run_data={},
+            tenant_id="a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            current_run_id=curr_id,
+            previous_run_id=prev_id,
+        )
+        print(json.dumps(result, indent=2))
+    else:
+        with_changes = "--with-changes" in sys.argv
+        label = "WITH CHANGES" if with_changes else "IDENTICAL RUNS"
 
-    result = run(
-        current_run_data=current,
-        previous_run_data=previous,
-        tenant_id="a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-    )
+        previous = json.loads((FIXTURES / "monitoring_previous.json").read_text())
+        current = make_current(with_changes)
 
-    print(f"[{label}]")
-    print(json.dumps(result, indent=2))
+        result = run(
+            current_run_data=current,
+            previous_run_data=previous,
+            tenant_id="a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        )
+
+        print(f"[{label}]")
+        print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":
