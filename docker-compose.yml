@@ -4,14 +4,53 @@ services:
     container_name: hackiwha-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_USER: hackiwha
       POSTGRES_PASSWORD: hackiwha_dev
       POSTGRES_DB: hackiwha
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hackiwha -d hackiwha"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: hackiwha-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://hackiwha:hackiwha_dev@postgres:5432/hackiwha
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_EMBEDDING_API_KEY: ${GEMINI_EMBEDDING_API_KEY:-${GEMINI_API_KEY}}
+      TAVILY_API_KEY: ${TAVILY_API_KEY}
+      FRONTEND_URL: http://localhost:80
+      PORT: 3000
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build: ./frontend
+    container_name: hackiwha-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   pgdata:

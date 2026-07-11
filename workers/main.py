@@ -38,13 +38,16 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
         results["competitor_recon"] = {"error": str(e)}
 
     try:
-        results["strategy_output"] = run_strategy(
-            tenant_id,
-            business_description,
-            run_id,
-            market_intel=results.get("market_intelligence"),
-            competitor_recon=results.get("competitor_recon"),
-        )
+        market_intel = results.get("market_intelligence")
+        competitor_recon = results.get("competitor_recon")
+        if isinstance(market_intel, dict) and "error" not in market_intel and isinstance(competitor_recon, dict) and "error" not in competitor_recon:
+            results["strategy_output"] = run_strategy(
+                tenant_id, business_description, run_id,
+                market_intel=market_intel,
+                competitor_recon=competitor_recon,
+            )
+        else:
+            results["strategy_output"] = {"error": "Skipped due to upstream errors"}
     except Exception as e:
         results["strategy_output"] = {"error": str(e)}
 

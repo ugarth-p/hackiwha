@@ -4,9 +4,11 @@ import {
   Get,
   Param,
   Body,
+  Sse,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Observable, map } from 'rxjs';
 import { ResearchService } from './research.service';
 import { RunPipelineDto } from './research.dto';
 
@@ -34,5 +36,17 @@ export class ResearchController {
   @Get('tenants/:tenantId/findings')
   async getTenantFindings(@Param('tenantId') tenantId: string) {
     return this.researchService.getFindingsByTenant(tenantId);
+  }
+
+  @Sse('runs/:runId/stream')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  streamRun(@Param('runId') runId: string): Observable<any> {
+    return this.researchService.getRunEvents(runId).pipe(
+      map((event) => ({
+        data: event,
+        id: `${Date.now()}`,
+        type: event.type,
+      })),
+    );
   }
 }

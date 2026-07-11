@@ -1,14 +1,28 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { join } from 'path';
+import { Subject } from 'rxjs';
 import { RunPipelineDto } from './research.dto';
 import { PrismaService } from '@/modules/prisma/prisma.service';
+
+export interface PipelineEvent {
+  type: 'step_started' | 'step_completed' | 'run_completed' | 'run_failed';
+  runId: string;
+  stepName?: string;
+  output?: unknown;
+  error?: string;
+}
 
 @Injectable()
 export class ResearchService {
   private readonly logger = new Logger(ResearchService.name);
+  private readonly pipelineEvents$ = new Subject<PipelineEvent>();
 
   constructor(private prisma: PrismaService) {}
+
+  getRunEvents(runId: string) {
+    return this.pipelineEvents$.asObservable();
+  }
 
   async runPipeline(dto: RunPipelineDto) {
     const tenant = await this.prisma.tenant.upsert({
@@ -16,7 +30,7 @@ export class ResearchService {
       update: { businessDescription: dto.businessDescription },
       create: {
         id: dto.tenantId,
-        name: dto.tenantId,
+        name: dto.name ?? dto.tenantId,
         businessDescription: dto.businessDescription,
       },
     });
@@ -42,8 +56,13 @@ export class ResearchService {
   }
 
   async getFindings(runId: string) {
+    const run = await this.prisma.pipelineRun.findUnique({
+      where: { id: runId },
+    });
+    if (!run) return [];
     return this.prisma.finding.findMany({
-      where: { tenantId: runId },
+      where: { tenantId: run.tenantId },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -57,7 +76,7 @@ export class ResearchService {
   private spawnWorker(runId: string, dto: RunPipelineDto): void {
     const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
     const workerPath = join(workersDir, 'main.py');
-    const pythonBin = join(workersDir, '.venv', 'bin', 'python3');
+    const pythonBin = 'python3';
     const python = spawn(pythonBin, [workerPath], {
       cwd: workersDir,
       env: { ...process.env },
@@ -95,11 +114,20 @@ export class ResearchService {
               data: { status: 'completed', completedAt: new Date() },
             });
             await this.savePipelineSteps(runId, result);
+            this.pipelineEvents$.next({
+              type: 'run_completed',
+              runId,
+            });
             this.logger.log(`Pipeline run ${runId} completed`);
           } catch {
             await this.prisma.pipelineRun.update({
               where: { id: runId },
               data: { status: 'failed', completedAt: new Date() },
+            });
+            this.pipelineEvents$.next({
+              type: 'run_failed',
+              runId,
+              error: 'Failed to parse worker output',
             });
             this.logger.error(`Pipeline run ${runId} — failed to parse output`);
           }
@@ -107,6 +135,11 @@ export class ResearchService {
           await this.prisma.pipelineRun.update({
             where: { id: runId },
             data: { status: 'failed', completedAt: new Date() },
+          });
+          this.pipelineEvents$.next({
+            type: 'run_failed',
+            runId,
+            error: stderr,
           });
           this.logger.error(
             `Pipeline run ${runId} failed (code ${code}): ${stderr}`,
@@ -121,6 +154,11 @@ export class ResearchService {
         await this.prisma.pipelineRun.update({
           where: { id: runId },
           data: { status: 'failed', completedAt: new Date() },
+        });
+        this.pipelineEvents$.next({
+          type: 'run_failed',
+          runId,
+          error: err.message,
         });
         this.logger.error(
           `Pipeline run ${runId} — spawn error: ${err.message}`,
@@ -145,6 +183,15 @@ export class ResearchService {
 
     if (entries.length > 0) {
       await this.prisma.pipelineStep.createMany({ data: entries });
+    }
+
+    for (const [stepName, output] of Object.entries(result)) {
+      this.pipelineEvents$.next({
+        type: 'step_completed',
+        runId,
+        stepName,
+        output,
+      });
     }
   }
 }

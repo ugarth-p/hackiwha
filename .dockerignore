@@ -1,0 +1,11 @@
+# Root-level ignores (backend build context is project root)
+frontend/
+node_modules/
+.git/
+.env
+.env.*
+!.env.example
+*.md
+my-project/
+docker-compose.yml
+docker-compose.yaml

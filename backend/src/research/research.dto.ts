@@ -8,6 +8,10 @@ export class RunPipelineDto {
   businessDescription!: string;
 
   @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   knownCompetitors?: string[];
