@@ -8,7 +8,7 @@ psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS vector;" || echo "pgvect
 
 # Push Prisma schema to database
 echo "Pushing Prisma schema..."
-npx prisma db push --accept-data-loss
+npm run push
 
 echo "Database ready. Starting server..."
 
