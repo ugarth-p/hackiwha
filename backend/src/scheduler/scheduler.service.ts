@@ -14,8 +14,18 @@ export class SchedulerService implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    setInterval(() => this.handleScheduledRuns(), 15 * 60 * 1000);
-    setInterval(() => this.handleMonitoringRuns(), 24 * 60 * 60 * 1000);
+    setInterval(
+      () => {
+        void this.handleScheduledRuns();
+      },
+      15 * 60 * 1000,
+    );
+    setInterval(
+      () => {
+        void this.handleMonitoringRuns();
+      },
+      24 * 60 * 60 * 1000,
+    );
   }
 
   async handleScheduledRuns() {
@@ -101,18 +111,13 @@ export class SchedulerService implements OnModuleInit {
     tenantId: string,
     businessDescription: string | null,
     runId: string,
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, unknown>> {
     return new Promise((resolve, reject) => {
-      const workerPath = join(
-        __dirname,
-        '..',
-        '..',
-        '..',
-        'workers',
-        'main.py',
-      );
-      const python = spawn('python3', [workerPath], {
-        cwd: join(__dirname, '..', '..', '..', 'workers'),
+      const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+      const workerPath = join(workersDir, 'main.py');
+      const pythonBin = join(workersDir, '.venv', 'bin', 'python3');
+      const python = spawn(pythonBin, [workerPath], {
+        cwd: workersDir,
         env: { ...process.env },
       });
 
@@ -141,25 +146,33 @@ export class SchedulerService implements OnModuleInit {
       python.on('close', (code) => {
         if (code === 0) {
           try {
-            resolve(JSON.parse(stdout));
+            resolve(JSON.parse(stdout) as Record<string, unknown>);
           } catch {
+            this.logger.error(`Failed to parse pipeline output: ${stdout}`);
             reject(new Error(`Failed to parse pipeline output: ${stdout}`));
           }
         } else {
+          this.logger.error(`Pipeline worker failed (code ${code}): ${stderr}`);
           reject(new Error(`Worker failed (code ${code}): ${stderr}`));
         }
       });
 
-      python.on('error', reject);
+      python.on('error', (err) => {
+        this.logger.error(`Pipeline worker spawn error: ${err.message}`);
+        reject(err);
+      });
     });
   }
 
-  private async savePipelineSteps(runId: string, result: Record<string, any>) {
+  private async savePipelineSteps(
+    runId: string,
+    result: Record<string, unknown>,
+  ) {
     const entries = Object.entries(result).map(([stepName, outputJson]) => ({
       runId,
       stepName,
       status: 'completed' as const,
-      outputJson,
+      outputJson: outputJson as object,
       startedAt: new Date(),
       completedAt: new Date(),
     }));

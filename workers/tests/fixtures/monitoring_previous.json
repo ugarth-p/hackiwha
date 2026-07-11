@@ -1,0 +1,73 @@
+{
+  "market_intelligence": {
+    "industry_summary": "The freelance PM market is $7B and growing at 10% CAGR. AI features are emerging but not yet standard.",
+    "market_trends": [
+      "Basic task management",
+      "Calendar integration",
+      "File sharing"
+    ],
+    "typical_pricing_models": [
+      "Per-seat pricing $5-15/user/mo"
+    ],
+    "common_customer_pain_points": [
+      "Complex onboarding",
+      "Poor mobile apps"
+    ],
+    "sources": [
+      "https://example.com/old-report"
+    ]
+  },
+  "competitor_recon": {
+    "competitors": [
+      {
+        "name": "Trello",
+        "pricing_notes": "Free + $5/user/mo",
+        "positioning": "Visual kanban boards",
+        "recent_activity": [
+          "Minor UI updates"
+        ],
+        "review_sentiment_summary": "Users like simplicity",
+        "sources": []
+      }
+    ]
+  },
+  "strategy_output": {
+    "analysis": {
+      "market_position": "Early-stage positioning in a growing market with limited differentiation.",
+      "swot": {
+        "strengths": [
+          "New entrant with fresh perspective"
+        ],
+        "weaknesses": [
+          "No brand recognition"
+        ],
+        "opportunities": [
+          {
+            "title": "Market Gap",
+            "description": "No AI-native tool exists for freelancers"
+          }
+        ],
+        "threats": [
+          {
+            "title": "Competition",
+            "description": "Established players have resources"
+          }
+        ]
+      },
+      "competitor_gaps": [
+        {
+          "competitor": "Trello",
+          "gap": "No AI features"
+        }
+      ]
+    },
+    "strategy": [
+      {
+        "pattern": "ai-assisted-workflow",
+        "description": "Build AI core features",
+        "cites": "Market Gap",
+        "expected_impact": "Differentiation from competitors"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "competitors": [
+    {
+      "name": "Trello",
+      "pricing_notes": "Free tier (10 boards), Standard $5/user/mo, Premium $10/user/mo, Enterprise $17.50/user/mo",
+      "positioning": "Visual project management using kanban boards. Targets small teams and individuals who prefer simplicity over complexity.",
+      "recent_activity": [
+        "Launched AI-powered butler automation rules in 2024",
+        "Added timeline and calendar views to premium tier",
+        "Introduced workspace-level permissions for enterprise"
+      ],
+      "review_sentiment_summary": "Users love the visual, intuitive interface but complain about limited reporting, poor mobile experience, and feature ceiling for complex projects.",
+      "sources": [
+        "https://trello.com/pricing",
+        "https://g2.com/products/trello/reviews"
+      ]
+    },
+    {
+      "name": "Asana",
+      "pricing_notes": "Free (up to 15 users), Starter $10.99/user/mo, Advanced $24.99/user/mo, Enterprise custom",
+      "positioning": "Work management platform for cross-functional teams. Emphasizes goal tracking, portfolio management, and workflow automation.",
+      "recent_activity": [
+        "Launched Asana AI Studio for workflow automation",
+        "Added goals and milestones tracking",
+        "Expanded enterprise SSO and compliance features"
+      ],
+      "review_sentiment_summary": "Strong for mid-size teams but overwhelming for freelancers. Pricing increases sting as teams grow. AI features are promising but immature.",
+      "sources": [
+        "https://asana.com/pricing",
+        "https://g2.com/products/asana/reviews"
+      ]
+    }
+  ]
+}

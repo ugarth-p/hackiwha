@@ -57,6 +57,42 @@ def store_finding(
     return finding_id
 
 
+def get_findings_by_run(run_id: str) -> list[dict[str, Any]]:
+    conn = _get_conn()
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            """SELECT id, "tenantId", "runId", source, content, embedding
+               FROM "Finding" WHERE "runId" = %s""",
+            (run_id,),
+        )
+        rows = cur.fetchall()
+    results = []
+    for row in rows:
+        embedding = None
+        if row["embedding"]:
+            embedding = [float(v) for v in str(row["embedding"]).strip("[]").split(",")]
+        results.append({
+            "id": row["id"],
+            "tenant_id": row["tenantId"],
+            "run_id": row["runId"],
+            "source": row["source"],
+            "content": json.loads(row["content"]) if isinstance(row["content"], str) else row["content"],
+            "embedding": embedding,
+        })
+    return results
+
+
+def cosine_similarity(a: list[float], b: list[float]) -> float:
+    if not a or not b or len(a) != len(b):
+        return 0.0
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x * x for x in a) ** 0.5
+    norm_b = sum(x * x for x in b) ** 0.5
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
 def ensure_tenant(tenant_id: str, business_description: str) -> None:
     conn = _get_conn()
     with conn.cursor() as cur:

@@ -6,11 +6,13 @@ from google import genai
 from pydantic import BaseModel, Field
 
 from config import settings
+from db import cosine_similarity, get_findings_by_run
 from retry import generate_with_retry
 
 _client = genai.Client(api_key=settings.gemini_api_key)
 
 SIGNIFICANT_THRESHOLD = 0.10
+EMBEDDING_SIMILARITY_THRESHOLD = 0.85
 
 SYSTEM_PROMPT = """You are a Market Monitoring Analyst. You compare two research cycles and identify meaningful changes.
 
@@ -285,10 +287,70 @@ def _llm_explain(
     return json.loads(raw)
 
 
+SOURCE_LABELS = {
+    "market_intel": "Market intelligence",
+    "competitor_recon": "Competitor research",
+    "strategy": "Strategy",
+}
+
+
+def _embedding_comparison(
+    current_findings: list[dict[str, Any]],
+    previous_findings: list[dict[str, Any]],
+) -> tuple[list[str], bool]:
+    changes: list[str] = []
+    significant = False
+
+    current_by_source = {f["source"]: f for f in current_findings}
+    previous_by_source = {f["source"]: f for f in previous_findings}
+
+    all_sources = set(current_by_source) | set(previous_by_source)
+
+    for source in sorted(all_sources):
+        label = SOURCE_LABELS.get(source, source)
+        cur = current_by_source.get(source)
+        prev = previous_by_source.get(source)
+
+        if cur and not prev:
+            changes.append(f"{label}: new finding (no previous data)")
+            significant = True
+            continue
+        if prev and not cur:
+            changes.append(f"{label}: finding removed since last run")
+            significant = True
+            continue
+        if not cur or not prev:
+            continue
+
+        cur_emb = cur.get("embedding")
+        prev_emb = prev.get("embedding")
+
+        if not cur_emb or not prev_emb:
+            changes.append(f"{label}: no embeddings available for comparison")
+            continue
+
+        sim = compare_similarity(cur_emb, prev_emb)
+        if sim < EMBEDDING_SIMILARITY_THRESHOLD:
+            pct = (1 - sim) * 100
+            changes.append(
+                f"{label}: significant semantic shift "
+                f"(similarity {sim:.0%}, {pct:.0f}% change)"
+            )
+            significant = True
+        else:
+            changes.append(
+                f"{label}: stable (similarity {sim:.0%})"
+            )
+
+    return changes, significant
+
+
 def run(
     current_run_data: dict[str, Any],
     previous_run_data: dict[str, Any] | None,
     tenant_id: str = "",
+    current_run_id: str = "",
+    previous_run_id: str = "",
 ) -> dict[str, Any]:
     if previous_run_data is None:
         return MonitoringOutput(
@@ -298,26 +360,42 @@ def run(
             concept_for_validation="Review initial findings and confirm business description accuracy.",
         ).model_dump()
 
+    embedding_changes: list[str] = []
+    embedding_significant = False
+
+    if current_run_id and previous_run_id:
+        try:
+            current_findings = get_findings_by_run(current_run_id)
+            previous_findings = get_findings_by_run(previous_run_id)
+            embedding_changes, embedding_significant = _embedding_comparison(
+                current_findings, previous_findings
+            )
+        except Exception as e:
+            embedding_changes = [f"Embedding comparison failed: {e}"]
+
     current = _prepare_comparison_data(current_run_data)
     previous = _prepare_comparison_data(previous_run_data)
 
-    deltas, significant = _rule_based_comparison(current, previous)
+    rule_changes, rule_significant = _rule_based_comparison(current, previous)
+
+    all_changes = embedding_changes + rule_changes
+    significant = embedding_significant or rule_significant
 
     result = MonitoringOutput(
         significant_change_detected=significant,
-        changes=deltas,
+        changes=all_changes,
     )
 
-    if significant and deltas:
+    if significant and all_changes:
         try:
-            llm_output = _llm_explain(current, previous, deltas)
+            llm_output = _llm_explain(current, previous, all_changes)
             result.alert_message = llm_output.get("alert_message")
             result.concept_for_validation = llm_output.get(
                 "concept_for_validation", ""
             )
         except Exception:
             result.alert_message = (
-                f"Significant changes detected: {'; '.join(deltas)}"
+                f"Significant changes detected: {'; '.join(all_changes)}"
             )
             result.concept_for_validation = "Review the detected changes manually."
 

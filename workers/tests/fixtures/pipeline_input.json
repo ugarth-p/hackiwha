@@ -1,0 +1,7 @@
+{
+  "mode": "pipeline",
+  "tenant_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  "business_description": "FreelanceFlow - AI-powered project management tool for freelance developers and designers",
+  "known_competitors": ["Trello", "Asana"],
+  "run_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+}

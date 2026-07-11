@@ -19,6 +19,7 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
 
     from scraping.agent import run as run_market_intel
     from analysis.agent import run as run_competitor_recon
+    from strategy.agent import run as run_strategy
 
     results: dict[str, Any] = {}
 
@@ -35,8 +36,6 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
         )
     except Exception as e:
         results["competitor_recon"] = {"error": str(e)}
-
-    from strategy.agent import run as run_strategy
 
     try:
         market_intel = results.get("market_intelligence")
@@ -61,8 +60,14 @@ def run_monitoring(input_data: dict[str, Any]) -> dict[str, Any]:
     current_data = input_data.get("current_run_data", {})
     previous_data = input_data.get("previous_run_data")
     tenant_id = input_data.get("tenant_id", "")
+    current_run_id = input_data.get("current_run_id", "")
+    previous_run_id = input_data.get("previous_run_id", "")
 
-    return run_monitoring_agent(current_data, previous_data, tenant_id)
+    return run_monitoring_agent(
+        current_data, previous_data, tenant_id,
+        current_run_id=current_run_id,
+        previous_run_id=previous_run_id,
+    )
 
 
 if __name__ == "__main__":

@@ -4,6 +4,13 @@ import { join } from 'path';
 import { RunMonitoringDto } from './monitoring.dto';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 
+interface MonitoringWorkerResult {
+  significant_change_detected: boolean;
+  changes: string[];
+  alert_message: string | null;
+  concept_for_validation: string;
+}
+
 @Injectable()
 export class MonitoringService {
   private readonly logger = new Logger(MonitoringService.name);
@@ -37,6 +44,8 @@ export class MonitoringService {
 
     const result = await this.spawnMonitoringWorker({
       tenant_id: dto.tenantId,
+      current_run_id: dto.currentRunId,
+      previous_run_id: previousRun?.id ?? null,
       current_run_data: currentData,
       previous_run_data: previousData,
     });
@@ -83,9 +92,9 @@ export class MonitoringService {
   }
 
   private extractStepOutputs(
-    steps: { stepName: string; outputJson: any }[],
-  ): Record<string, any> {
-    const outputs: Record<string, any> = {};
+    steps: { stepName: string; outputJson: unknown }[],
+  ): Record<string, unknown> {
+    const outputs: Record<string, unknown> = {};
     for (const step of steps) {
       if (step.outputJson) {
         outputs[step.stepName] = step.outputJson;
@@ -94,18 +103,15 @@ export class MonitoringService {
     return outputs;
   }
 
-  private spawnMonitoringWorker(inputData: Record<string, any>): Promise<any> {
+  private spawnMonitoringWorker(
+    inputData: Record<string, unknown>,
+  ): Promise<MonitoringWorkerResult> {
     return new Promise((resolve, reject) => {
-      const workerPath = join(
-        __dirname,
-        '..',
-        '..',
-        '..',
-        'workers',
-        'main.py',
-      );
-      const python = spawn('python3', [workerPath], {
-        cwd: join(__dirname, '..', '..', '..', 'workers'),
+      const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+      const workerPath = join(workersDir, 'main.py');
+      const pythonBin = join(workersDir, '.venv', 'bin', 'python3');
+      const python = spawn(pythonBin, [workerPath], {
+        cwd: workersDir,
         env: { ...process.env },
       });
 
@@ -127,18 +133,25 @@ export class MonitoringService {
       python.on('close', (code) => {
         if (code === 0) {
           try {
-            resolve(JSON.parse(stdout));
+            resolve(JSON.parse(stdout) as MonitoringWorkerResult);
           } catch {
+            this.logger.error(`Failed to parse monitoring output: ${stdout}`);
             reject(new Error(`Failed to parse monitoring output: ${stdout}`));
           }
         } else {
+          this.logger.error(
+            `Monitoring worker failed (code ${code}): ${stderr}`,
+          );
           reject(
             new Error(`Monitoring worker failed (code ${code}): ${stderr}`),
           );
         }
       });
 
-      python.on('error', reject);
+      python.on('error', (err) => {
+        this.logger.error(`Monitoring worker spawn error: ${err.message}`);
+        reject(err);
+      });
     });
   }
 }

@@ -2,8 +2,8 @@ import { IsString } from 'class-validator';
 
 export class RunMonitoringDto {
   @IsString()
-  tenantId: string;
+  tenantId!: string;
 
   @IsString()
-  currentRunId: string;
+  currentRunId!: string;
 }
