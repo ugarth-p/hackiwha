@@ -13,9 +13,9 @@ docker compose up -d frontend
 echo "Waiting for nginx to be ready..."
 sleep 3
 
-# Obtain certificate via certbot service
+# Obtain certificate via certbot service (override entrypoint since the service has a renewal loop)
 echo "Requesting Let's Encrypt certificate..."
-docker compose run --rm certbot certonly \
+docker compose run --rm --entrypoint certbot certbot certonly \
   --webroot \
   --webroot-path=/var/www/html \
   -d "$DOMAIN" \
