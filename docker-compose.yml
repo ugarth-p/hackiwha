@@ -53,8 +53,8 @@ services:
       backend:
         condition: service_healthy
     volumes:
-      - ./frontend/nginx.conf:/etc/nginx/conf.d/nginx.ssl.conf
-      - ./frontend/nginx.http.conf:/etc/nginx/conf.d/nginx.http.conf
+      - ./frontend/nginx.conf:/etc/nginx/nginx.ssl.conf
+      - ./frontend/nginx.http.conf:/etc/nginx/nginx.http.conf
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - certbot-www:/var/www/html

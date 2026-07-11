@@ -26,7 +26,7 @@ docker compose run --rm certbot certonly \
 
 # Switch nginx to SSL config and reload
 echo "Switching nginx to SSL..."
-docker compose exec frontend sh -c "cp /etc/nginx/conf.d/nginx.ssl.conf /etc/nginx/conf.d/default.conf && nginx -s reload"
+docker compose exec frontend sh -c "cp /etc/nginx/nginx.ssl.conf /etc/nginx/conf.d/default.conf && nginx -s reload"
 
 echo "=== SSL setup complete for $DOMAIN ==="
 echo "Verify: curl -I https://$DOMAIN"

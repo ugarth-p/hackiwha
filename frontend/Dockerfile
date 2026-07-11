@@ -14,14 +14,11 @@ FROM nginx:alpine
 
 RUN rm /etc/nginx/conf.d/default.conf
 
-COPY nginx.conf /etc/nginx/conf.d/nginx.ssl.conf
-COPY nginx.http.conf /etc/nginx/conf.d/nginx.http.conf
-COPY init-ssl.sh /usr/local/bin/init-ssl.sh
-
-RUN chmod +x /usr/local/bin/init-ssl.sh
+COPY nginx.conf /etc/nginx/nginx.ssl.conf
+COPY nginx.http.conf /etc/nginx/nginx.http.conf
 
 # Start with HTTP-only config (for initial cert acquisition)
-RUN cp /etc/nginx/conf.d/nginx.http.conf /etc/nginx/conf.d/default.conf
+RUN cp /etc/nginx/nginx.http.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
