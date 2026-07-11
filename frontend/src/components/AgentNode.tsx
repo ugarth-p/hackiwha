@@ -6,6 +6,7 @@ import {
   Sparkles,
   Workflow,
 } from "lucide-react"
+import type { MarketIntelOutput, CompetitorReconOutput, StrategyOutput } from "@/types/api"
 
 type StageState = "idle" | "processing" | "complete"
 
@@ -27,7 +28,16 @@ type StageData = {
   synthesisPromptValue: string
   judgeBroadcastActive: boolean
   judgeFinalPanelVisible: boolean
+  marketIntel: MarketIntelOutput | null
+  competitorRecon: CompetitorReconOutput | null
+  strategyOutput: StrategyOutput | null
+  pipelineError: string | null
   onToggleQuickInput?: () => void
+  onQuickInputSubmit?: () => void
+  quickInputBusiness?: string
+  quickInputCompetitors?: string
+  onQuickInputBusinessChange?: (value: string) => void
+  onQuickInputCompetitorsChange?: (value: string) => void
   onSynthesisPromptChange?: (value: string) => void
   onSynthesisPromptSubmit?: () => void
 }
@@ -100,94 +110,102 @@ export function AgentNode({ data }: NodeProps) {
           <div className="quick-input-stack">
             <input
               className="quick-input-field"
-              defaultValue="Neural Ingress"
-              placeholder="Enter agent context"
+              value={d.quickInputBusiness || ""}
+              onChange={(e) => d.onQuickInputBusinessChange?.(e.target.value)}
+              placeholder="Business description (e.g. AI-powered fitness app)"
             />
             <input
               className="quick-input-field"
-              placeholder="Advertiser names, comma separated"
+              value={d.quickInputCompetitors || ""}
+              onChange={(e) => d.onQuickInputCompetitorsChange?.(e.target.value)}
+              placeholder="Competitor names, comma separated (optional)"
             />
             <div className="quick-input-row">
-              <span className="quick-input-hint">Add advertiser names to scope the agent run.</span>
-              <button className="quick-input-action" type="button">Start</button>
+              <span className="quick-input-hint">Describe your business to start the research pipeline.</span>
+              <button className="quick-input-action" type="button" onClick={d.onQuickInputSubmit}>Start</button>
             </div>
           </div>
         </motion.div>
       ) : null}
 
-      {d.icon === "network" && d.isResultPanelVisible ? (
+      {d.icon === "sparkles" && d.marketIntel && (
         <motion.aside
           initial={{ opacity: 0, x: 10, scale: 0.98 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.24, ease: "easeOut" }}
           className="agent-results-panel"
         >
-          <div className="agent-results-label">Second Agent Results</div>
-          <div className="agent-results-title">Constraints resolved</div>
-          <p className="agent-results-copy">
-            The logic engine has finished evaluating the incoming brief. Key priorities,
-            dependencies, and execution order are now locked in.
-          </p>
+          <div className="agent-results-label">Market Intelligence</div>
+          <div className="agent-results-title">Industry Research Complete</div>
+          <p className="agent-results-copy">{d.marketIntel.industry_summary}</p>
           <div className="agent-results-list">
-            <div className="agent-results-item">
-              <span className="agent-results-key">Priority</span>
-              <span className="agent-results-value">High-confidence routing</span>
-            </div>
-            <div className="agent-results-item">
-              <span className="agent-results-key">Scope</span>
-              <span className="agent-results-value">Advertiser set normalized</span>
-            </div>
-            <div className="agent-results-item">
-              <span className="agent-results-key">Status</span>
-              <span className="agent-results-value">Ready for synthesis</span>
-            </div>
+            {d.marketIntel.market_trends?.slice(0, 3).map((trend, i) => (
+              <div key={i} className="agent-results-item">
+                <span className="agent-results-key">Trend {i + 1}</span>
+                <span className="agent-results-value">{trend}</span>
+              </div>
+            ))}
+            {d.marketIntel.common_customer_pain_points?.slice(0, 2).map((pain, i) => (
+              <div key={`pain-${i}`} className="agent-results-item">
+                <span className="agent-results-key">Pain Point</span>
+                <span className="agent-results-value">{pain}</span>
+              </div>
+            ))}
+          </div>
+        </motion.aside>
+      )}
+
+      {d.icon === "network" && d.isResultPanelVisible && d.competitorRecon ? (
+        <motion.aside
+          initial={{ opacity: 0, x: 10, scale: 0.98 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.24, ease: "easeOut" }}
+          className="agent-results-panel"
+        >
+          <div className="agent-results-label">Competitor Reconnaissance</div>
+          <div className="agent-results-title">
+            {d.competitorRecon.competitors?.length || 0} competitors analyzed
+          </div>
+          <div className="agent-results-list">
+            {d.competitorRecon.competitors?.slice(0, 3).map((comp, i) => (
+              <div key={i} className="agent-results-item" style={{ flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
+                <span className="agent-results-key">{comp.name}</span>
+                <span className="agent-results-value">{comp.positioning}</span>
+                {comp.pricing_notes && (
+                  <span className="agent-results-value" style={{ opacity: 0.7 }}>Pricing: {comp.pricing_notes}</span>
+                )}
+              </div>
+            ))}
           </div>
         </motion.aside>
       ) : null}
 
-      {d.icon === "workflow" && (d.isSynthesisPromptVisible || d.isSynthesisCronActive) ? (
+      {d.icon === "workflow" && d.strategyOutput ? (
         <motion.aside
           initial={{ opacity: 0, x: -10, scale: 0.98 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.24, ease: "easeOut" }}
           className="synthesis-prompt-panel"
         >
-          {d.isSynthesisCronActive ? (
-            <>
-              <div className="synthesis-prompt-label">Third Agent Cron</div>
-              <div className="synthesis-prompt-title">Restarting the first agent</div>
-              <p className="synthesis-prompt-copy">
-                The cycle is running. When the timer ends, the first agent will restart automatically.
-              </p>
-              <div className="synthesis-cron-timer">
-                <div className="synthesis-cron-value">{String(d.synthesisCronSecondsLeft).padStart(2, "0")}</div>
-                <div className="synthesis-cron-caption">seconds remaining</div>
+          <div className="synthesis-prompt-label">Strategy Output</div>
+          <div className="synthesis-prompt-title">Recommended Strategy</div>
+          <p className="synthesis-prompt-copy">{d.strategyOutput.messaging}</p>
+          <div className="agent-results-list">
+            <div className="agent-results-item">
+              <span className="agent-results-key">Positioning</span>
+              <span className="agent-results-value">{d.strategyOutput.positioning}</span>
+            </div>
+            <div className="agent-results-item">
+              <span className="agent-results-key">Pricing</span>
+              <span className="agent-results-value">{d.strategyOutput.pricing_recommendation}</span>
+            </div>
+            {d.strategyOutput.recommended_actions?.slice(0, 3).map((action, i) => (
+              <div key={i} className="agent-results-item">
+                <span className="agent-results-key">Action {i + 1}</span>
+                <span className="agent-results-value">{action}</span>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="synthesis-prompt-label">Third Agent Check-In</div>
-              <div className="synthesis-prompt-title">Validate the plan or add a change</div>
-              <p className="synthesis-prompt-copy">
-                Confirm the plan, or type what you want implemented next. The workflow
-                continues as soon as you press OK.
-              </p>
-              <div className="synthesis-prompt-stack">
-                <input
-                  className="synthesis-prompt-field"
-                  value={d.synthesisPromptValue}
-                  onChange={(event) => d.onSynthesisPromptChange?.(event.target.value)}
-                  placeholder="Validate the plan or describe an implementation"
-                />
-                <div className="synthesis-prompt-row">
-                  <span className="synthesis-prompt-hint">
-                    The synthesis agent will continue after your confirmation.
-                  </span>
-                  <button className="synthesis-prompt-action" type="button" onClick={d.onSynthesisPromptSubmit}>OK</button>
-                </div>
-              </div>
-            </>
-          )}
+            ))}
+          </div>
         </motion.aside>
       ) : null}
 
@@ -240,28 +258,33 @@ export function AgentNode({ data }: NodeProps) {
           <div className="judge-panel-label judge-panel-label-final">Final Judgment Panel</div>
           <div className="judge-panel-title">Verdict delivered</div>
           <div className="judge-verdict">Overall verdict: proceed with implementation</div>
-          <div className="judge-summary-list">
-            <div className="judge-summary-item">
-              <span className="judge-summary-key">Strengths</span>
-              <span className="judge-summary-value">Strong brand fit, differentiated positioning, and aligned messaging</span>
+          {d.strategyOutput ? (
+            <div className="judge-summary-list">
+              <div className="judge-summary-item">
+                <span className="judge-summary-key">Positioning</span>
+                <span className="judge-summary-value">{d.strategyOutput.positioning}</span>
+              </div>
+              <div className="judge-summary-item">
+                <span className="judge-summary-key">Messaging</span>
+                <span className="judge-summary-value">{d.strategyOutput.messaging}</span>
+              </div>
+              <div className="judge-summary-item">
+                <span className="judge-summary-key">Pricing</span>
+                <span className="judge-summary-value">{d.strategyOutput.pricing_recommendation}</span>
+              </div>
+              <div className="judge-summary-item">
+                <span className="judge-summary-key">Actions</span>
+                <span className="judge-summary-value">{d.strategyOutput.recommended_actions?.join("; ")}</span>
+              </div>
             </div>
-            <div className="judge-summary-item">
-              <span className="judge-summary-key">Weaknesses</span>
-              <span className="judge-summary-value">Needs tighter proof points and more disciplined rollout timing</span>
+          ) : (
+            <div className="judge-summary-list">
+              <div className="judge-summary-item">
+                <span className="judge-summary-key">Status</span>
+                <span className="judge-summary-value">Pipeline complete</span>
+              </div>
             </div>
-            <div className="judge-summary-item">
-              <span className="judge-summary-key">Consensus</span>
-              <span className="judge-summary-value">All three evaluators support the core strategy and direction</span>
-            </div>
-            <div className="judge-summary-item">
-              <span className="judge-summary-key">Disagreements</span>
-              <span className="judge-summary-value">They disagree on how much execution risk remains before launch</span>
-            </div>
-            <div className="judge-summary-item">
-              <span className="judge-summary-key">Recommendations</span>
-              <span className="judge-summary-value">Tighten copy, validate claims, refine the rollout, then ship</span>
-            </div>
-          </div>
+          )}
         </motion.aside>
       ) : null}
 

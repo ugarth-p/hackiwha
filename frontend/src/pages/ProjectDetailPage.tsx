@@ -46,6 +46,8 @@ export function ProjectDetailPage() {
   return (
     <AgentPipeline
       title={project.name}
+      tenantId={project.id}
+      businessDescription={project.description}
       headerLeft={
         <Link to="/projects" className="back-link">
           <ArrowLeft className="size-4" />
