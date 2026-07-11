@@ -72,7 +72,7 @@ def _build_search_context(business_description: str) -> str:
 
 def _synthesize(business_description: str, search_context: str) -> dict[str, Any]:
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name="gemini-3-flash-preview",
         system_instruction=SYSTEM_PROMPT,
     )
 

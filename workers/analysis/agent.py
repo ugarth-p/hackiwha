@@ -37,7 +37,7 @@ def _discover_competitors(business_description: str) -> list[str]:
     results = web_search(f"{business_description} top competitors companies", max_results=5)
     context = "\n".join(f"[{r['title']}] {r['content']}" for r in results)
 
-    model = genai.GenerativeModel(model_name="gemini-2.0-flash")
+    model = genai.GenerativeModel(model_name="gemini-3-flash-preview")
     prompt = f"""Given this business description: {business_description}
 
 And these search results:
@@ -77,7 +77,7 @@ def _research_competitor(name: str) -> dict[str, Any]:
     context = "\n\n".join(f"[{r['title']}]({r['url']})\n{r['content']}" for r in collected)
 
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name="gemini-3-flash-preview",
         system_instruction=SYSTEM_PROMPT,
     )
 
