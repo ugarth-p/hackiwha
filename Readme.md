@@ -4,6 +4,7 @@ An autonomous competitive intelligence platform built for **Theme 2: Marketing &
 
 ---
 
+
 ## Table of Contents
 
 - [System Architecture](#system-architecture)
