@@ -1,0 +1,28 @@
+{
+  "industry_summary": "The freelance project management software market is valued at approximately $8B globally, growing at 13% CAGR. The market is fragmented with several established players (Trello, Asana, Monday.com) and numerous niche tools. AI-powered features are becoming table stakes, with 67% of new tools launching with some form of automation. Remote work trends continue to drive demand for collaborative, cloud-first solutions.",
+  "market_trends": [
+    "AI-powered task automation and predictive scheduling",
+    "Mobile-first design for on-the-go project management",
+    "Integration-heavy ecosystems connecting to 100+ tools",
+    "Usage-based pricing replacing flat per-seat models",
+    "Real-time collaboration with video/audio embedded in tasks"
+  ],
+  "typical_pricing_models": [
+    "Freemium with premium tiers ($5-15/user/month)",
+    "Usage-based pricing tied to active projects or storage",
+    "Enterprise custom pricing with annual contracts",
+    "Flat-rate solo plans for individual freelancers ($8-12/month)"
+  ],
+  "common_customer_pain_points": [
+    "Overwhelming feature sets that complicate simple workflows",
+    "Poor mobile app experiences compared to desktop",
+    "Lack of AI-assisted prioritization and scheduling",
+    "Hidden costs in per-seat pricing as teams grow",
+    "Difficult data export and vendor lock-in concerns"
+  ],
+  "sources": [
+    "https://example.com/pm-market-report-2025",
+    "https://example.com/freelance-tools-survey",
+    "https://example.com/ai-pm-trends"
+  ]
+}

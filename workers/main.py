@@ -19,6 +19,7 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
 
     from scraping.agent import run as run_market_intel
     from analysis.agent import run as run_competitor_recon
+    from strategy.agent import run as run_strategy
 
     results: dict[str, Any] = {}
 
@@ -36,8 +37,16 @@ def run_pipeline(input_data: dict[str, Any]) -> dict[str, Any]:
     except Exception as e:
         results["competitor_recon"] = {"error": str(e)}
 
-    results["strategy_output"] = {"error": str(
-        "Strategy agent not implemented yet")}
+    try:
+        results["strategy_output"] = run_strategy(
+            tenant_id,
+            business_description,
+            run_id,
+            market_intel=results.get("market_intelligence"),
+            competitor_recon=results.get("competitor_recon"),
+        )
+    except Exception as e:
+        results["strategy_output"] = {"error": str(e)}
 
     return results
 
