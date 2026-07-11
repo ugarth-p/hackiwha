@@ -208,7 +208,6 @@ type AgentPipelineProps = {
   headerLeft?: React.ReactNode
   tenantId?: string
   businessDescription?: string
-  onStateChange?: (nodes: Node[], edges: Edge[]) => void
 }
 
 export function AgentPipeline({
@@ -216,7 +215,6 @@ export function AgentPipeline({
   headerLeft,
   tenantId,
   businessDescription,
-  onStateChange,
 }: AgentPipelineProps) {
   const [stageStates, setStageStates] = useState<StageState[]>(() => stages.map(() => "idle"))
   const [showQuickInput, setShowQuickInput] = useState(false)
@@ -304,7 +302,7 @@ export function AgentPipeline({
 
     setStageStates(["processing", "idle", "idle", "idle"])
 
-    triggerMutation.mutate(
+    triggerRef.current.mutate(
       {
         tenantId,
         businessDescription: desc,
@@ -320,7 +318,7 @@ export function AgentPipeline({
         },
       },
     )
-  }, [tenantId, businessDescription, quickInputBusiness, quickInputCompetitors, triggerMutation])
+  }, [tenantId, businessDescription, quickInputBusiness, quickInputCompetitors])
 
   const handleQuickInputSubmit = useCallback(() => {
     setShowQuickInput(false)
@@ -334,7 +332,7 @@ export function AgentPipeline({
       .map((c) => c.trim())
       .filter(Boolean)
 
-    triggerMutation.mutate(
+    triggerRef.current.mutate(
       {
         tenantId,
         businessDescription: desc,
@@ -348,7 +346,7 @@ export function AgentPipeline({
         },
       },
     )
-  }, [quickInputBusiness, quickInputCompetitors, businessDescription, tenantId, triggerMutation])
+  }, [quickInputBusiness, quickInputCompetitors, businessDescription, tenantId])
 
   const toggleQuickInput = useCallback(() => {
     setShowQuickInput((c) => !c)

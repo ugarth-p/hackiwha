@@ -3,14 +3,14 @@ FROM node:22-slim AS builder
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile
+COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml backend/.npmrc ./
+RUN npm install -g pnpm && pnpm install --frozen-lockfile
 
-COPY prisma ./prisma/
+COPY backend/prisma ./prisma/
 RUN npx prisma generate
 
-COPY src ./src/
-COPY tsconfig.json tsconfig.build.json nest-cli.json ./
+COPY backend/src ./src/
+COPY backend/tsconfig.json backend/tsconfig.build.json backend/nest-cli.json ./
 RUN pnpm build
 
 # ---- Stage 2: Production (Node.js + Python) ----
@@ -22,6 +22,7 @@ RUN apt-get update && \
         python3-pip \
         python3-dev \
         build-essential \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -36,8 +37,12 @@ COPY --from=builder /app/prisma ./prisma/
 COPY workers/ ./workers/
 
 # Install Python dependencies globally
-RUN pip3 install --no-cache-dir -r workers/requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r workers/requirements.txt
+
+# Copy and set up entrypoint
+COPY backend/entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["./entrypoint.sh"]

@@ -1,26 +1,12 @@
-import { useCallback, useRef } from "react"
-import { useParams, Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { ArrowLeft } from "lucide-react"
 import { useProjectsStore } from "@/stores/projects"
+import { useParams } from "react-router-dom"
 import { AgentPipeline } from "@/components/AgentPipeline"
-import type { Node, Edge } from "@xyflow/react"
 
 export function ProjectDetailPage() {
   const { id } = useParams()
   const project = useProjectsStore((s) => s.getProject(id ?? ""))
-  const updateProject = useProjectsStore((s) => s.updateProject)
-  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleStateChange = useCallback(
-    (nodes: Node[], edges: Edge[]) => {
-      if (!project) return
-      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-      saveTimeoutRef.current = setTimeout(() => {
-        updateProject(project.id, { nodes, edges })
-      }, 600)
-    },
-    [project?.id, updateProject]
-  )
 
   if (!project) {
     return (
@@ -53,7 +39,6 @@ export function ProjectDetailPage() {
           <ArrowLeft className="size-4" />
         </Link>
       }
-      onStateChange={handleStateChange}
     />
   )
 }
