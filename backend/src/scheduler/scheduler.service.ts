@@ -113,9 +113,9 @@ export class SchedulerService implements OnModuleInit {
     runId: string,
   ): Promise<Record<string, unknown>> {
     return new Promise((resolve, reject) => {
-      const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+      const workersDir = join(__dirname, '..', '..', '..', 'workers');
       const workerPath = join(workersDir, 'main.py');
-      const pythonBin = join(workersDir, '.venv', 'bin', 'python3');
+      const pythonBin = 'python3';
       const python = spawn(pythonBin, [workerPath], {
         cwd: workersDir,
         env: { ...process.env },

@@ -21,7 +21,7 @@ type ProjectsStore = {
 
 const exampleProjects: Project[] = [
   {
-    id: "proj-1",
+    id: "550e8400-e29b-41d4-a716-446655440001",
     name: "Brand Analysis Pipeline",
     description: "Automated brand sentiment analysis using multi-agent evaluation.",
     createdAt: "2026-07-08",
@@ -29,7 +29,7 @@ const exampleProjects: Project[] = [
     edges: makeDefaultEdges(),
   },
   {
-    id: "proj-2",
+    id: "550e8400-e29b-41d4-a716-446655440002",
     name: "Content Strategy Engine",
     description: "Generates and evaluates content strategies across multiple channels.",
     createdAt: "2026-07-09",
@@ -38,13 +38,11 @@ const exampleProjects: Project[] = [
   },
 ]
 
-let nextId = 3
-
 export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   projects: exampleProjects,
 
   createProject: (name, description) => {
-    const id = `proj-${nextId++}`
+    const id = crypto.randomUUID()
     const project: Project = {
       id,
       name,

@@ -74,7 +74,7 @@ export class ResearchService {
   }
 
   private spawnWorker(runId: string, dto: RunPipelineDto): void {
-    const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+    const workersDir = join(__dirname, '..', '..', '..', 'workers');
     const workerPath = join(workersDir, 'main.py');
     const pythonBin = 'python3';
     const python = spawn(pythonBin, [workerPath], {
@@ -93,11 +93,20 @@ export class ResearchService {
     python.stdin.write(input);
     python.stdin.end();
 
-    let stdout = '';
+    let lineBuffer = '';
     let stderr = '';
 
     python.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
+      lineBuffer += data.toString();
+      const lines = lineBuffer.split('\n');
+      lineBuffer = lines.pop() ?? '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        this.handleWorkerLine(runId, trimmed).catch((err) =>
+          this.logger.error(`Pipeline run ${runId} — error handling line: ${err}`),
+        );
+      }
     });
 
     python.stderr.on('data', (data: Buffer) => {
@@ -106,31 +115,19 @@ export class ResearchService {
 
     python.on('close', (code) => {
       const handleClose = async () => {
+        if (lineBuffer.trim()) {
+          await this.handleWorkerLine(runId, lineBuffer.trim());
+        }
         if (code === 0) {
-          try {
-            const result = JSON.parse(stdout) as Record<string, unknown>;
-            await this.prisma.pipelineRun.update({
-              where: { id: runId },
-              data: { status: 'completed', completedAt: new Date() },
-            });
-            await this.savePipelineSteps(runId, result);
-            this.pipelineEvents$.next({
-              type: 'run_completed',
-              runId,
-            });
-            this.logger.log(`Pipeline run ${runId} completed`);
-          } catch {
-            await this.prisma.pipelineRun.update({
-              where: { id: runId },
-              data: { status: 'failed', completedAt: new Date() },
-            });
-            this.pipelineEvents$.next({
-              type: 'run_failed',
-              runId,
-              error: 'Failed to parse worker output',
-            });
-            this.logger.error(`Pipeline run ${runId} — failed to parse output`);
-          }
+          await this.prisma.pipelineRun.update({
+            where: { id: runId },
+            data: { status: 'completed', completedAt: new Date() },
+          });
+          this.pipelineEvents$.next({
+            type: 'run_completed',
+            runId,
+          });
+          this.logger.log(`Pipeline run ${runId} completed`);
         } else {
           await this.prisma.pipelineRun.update({
             where: { id: runId },
@@ -168,30 +165,30 @@ export class ResearchService {
     });
   }
 
-  private async savePipelineSteps(
-    runId: string,
-    result: Record<string, unknown>,
-  ) {
-    const entries = Object.entries(result).map(([stepName, outputJson]) => ({
-      runId,
-      stepName,
-      status: 'completed' as const,
-      outputJson: outputJson as object,
-      startedAt: new Date(),
-      completedAt: new Date(),
-    }));
-
-    if (entries.length > 0) {
-      await this.prisma.pipelineStep.createMany({ data: entries });
-    }
-
-    for (const [stepName, output] of Object.entries(result)) {
+  private async handleWorkerLine(runId: string, line: string): Promise<void> {
+    try {
+      const msg = JSON.parse(line) as {
+        step: string;
+        output: Record<string, unknown>;
+      };
+      await this.prisma.pipelineStep.create({
+        data: {
+          runId,
+          stepName: msg.step,
+          status: 'completed',
+          outputJson: msg.output as object,
+          startedAt: new Date(),
+          completedAt: new Date(),
+        },
+      });
       this.pipelineEvents$.next({
         type: 'step_completed',
         runId,
-        stepName,
-        output,
+        stepName: msg.step,
+        output: msg.output,
       });
+    } catch (err) {
+      this.logger.warn(`Pipeline run ${runId} — could not parse worker line: ${line}`);
     }
   }
 }
