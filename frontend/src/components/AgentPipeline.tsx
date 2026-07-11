@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import {
   ReactFlow,
   Background,
   applyNodeChanges,
-  applyEdgeChanges,
   type Node,
   type Edge,
   type OnNodesChange,
-  type OnEdgesChange,
 } from "@xyflow/react"
 import { ArrowRight } from "lucide-react"
 
@@ -235,7 +233,7 @@ export function AgentPipeline({
   const [quickInputCompetitors, setQuickInputCompetitors] = useState("")
 
   const triggerMutation = useTriggerPipeline()
-  const { data: findings } = useRunFindings(currentRunId)
+  useRunFindings(currentRunId)
 
   const activeStageIndex = useMemo(() => {
     const processingIndex = stageStates.findIndex((s) => s === "processing")
@@ -368,20 +366,15 @@ export function AgentPipeline({
   }, [isJudgeActive])
 
   const [nodes, setNodes] = useState<Node[]>(makeDefaultNodes)
-  const [edges, setEdges] = useState<Edge[]>(makeDefaultEdges)
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     []
   )
-  const onEdgesChange: OnEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    []
-  )
 
-  useEffect(() => {
-    setNodes((currentNodes) =>
-      currentNodes.map((node, index) => ({
+  const enrichedNodes: Node[] = useMemo(
+    () =>
+      nodes.map((node, index) => ({
         ...node,
         data: {
           ...node.data,
@@ -407,18 +400,18 @@ export function AgentPipeline({
           onQuickInputBusinessChange: index === 0 ? setQuickInputBusiness : undefined,
           onQuickInputCompetitorsChange: index === 0 ? setQuickInputCompetitors : undefined,
         },
-      }))
-    )
-  }, [
-    stageStates, activeStageIndex, showQuickInput, isSecondAgentResultsVisible,
-    judgeBroadcastActive, judgeFinalPanelVisible, marketIntel, competitorRecon,
-    strategyOutput, pipelineError, quickInputBusiness, quickInputCompetitors,
-    toggleQuickInput, handleQuickInputSubmit,
-  ])
+      })),
+    [
+      nodes, stageStates, activeStageIndex, showQuickInput, isSecondAgentResultsVisible,
+      judgeBroadcastActive, judgeFinalPanelVisible, marketIntel, competitorRecon,
+      strategyOutput, pipelineError, quickInputBusiness, quickInputCompetitors,
+      toggleQuickInput, handleQuickInputSubmit,
+    ],
+  )
 
-  useEffect(() => {
-    setEdges(() => {
-      const mainEdges: Edge[] = stages.slice(0, -1).map((stage, index) => {
+  const enrichedEdges: Edge[] = useMemo(
+    () =>
+      stages.slice(0, -1).map((stage, index) => {
         const isActive = index === activeStageIndex && stageStates[index] === "processing"
         const isCompleted = stageStates[index] === "complete"
         return {
@@ -431,14 +424,13 @@ export function AgentPipeline({
             ? { stroke: "#ff0071", strokeWidth: 2 }
             : { stroke: "rgba(0,0,0,0.12)", strokeWidth: 1.5 },
         }
-      })
-      return mainEdges
-    })
-  }, [stageStates, activeStageIndex])
+      }),
+    [stageStates, activeStageIndex],
+  )
 
   useEffect(() => {
-    onStateChange?.(nodes, edges)
-  }, [nodes, edges, onStateChange])
+    onStateChange?.(enrichedNodes, enrichedEdges)
+  }, [enrichedNodes, enrichedEdges, onStateChange])
 
   const launchLabel = completedCount === stages.length ? "Relaunch Sequence" : "Launch Sequence"
 
@@ -475,10 +467,9 @@ export function AgentPipeline({
         ) : null}
         <div className="react-flow-container">
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
+            nodes={enrichedNodes}
+            edges={enrichedEdges}
             onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
             nodeTypes={nodeTypes}
             fitView
             fitViewOptions={{ padding: 0.3 }}

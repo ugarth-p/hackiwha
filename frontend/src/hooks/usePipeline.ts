@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { api } from "@/services/api";
-import type { RunPipelineDto, PipelineEvent, PipelineRun, Finding } from "@/types/api";
+import type { RunPipelineDto, PipelineEvent } from "@/types/api";
 
 export function useTriggerPipeline() {
   const queryClient = useQueryClient();
