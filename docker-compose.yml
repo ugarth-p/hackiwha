@@ -33,7 +33,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_EMBEDDING_API_KEY: ${GEMINI_EMBEDDING_API_KEY:-${GEMINI_API_KEY}}
       TAVILY_API_KEY: ${TAVILY_API_KEY}
-      FRONTEND_URL: http://localhost:80
+      FRONTEND_URL: https://aether.semdev.app
       PORT: 3000
     healthcheck:
       test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/', r => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))\""]
@@ -48,9 +48,28 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       backend:
         condition: service_healthy
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/nginx.ssl.conf
+      - ./frontend/nginx.http.conf:/etc/nginx/conf.d/nginx.http.conf
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/html
+
+  certbot:
+    image: certbot/certbot
+    container_name: hackiwha-certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/html
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   pgdata:
+  certbot-etc:
+  certbot-var:
+  certbot-www:
