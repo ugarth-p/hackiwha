@@ -59,9 +59,6 @@ export function usePipelineStream(
         onEventRef.current(event);
       } catch { /* ignore parse errors */ }
     };
-    es.onerror = () => {
-      es.close();
-    };
     return () => es.close();
   }, [runId]);
 }

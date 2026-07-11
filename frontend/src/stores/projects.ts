@@ -21,7 +21,7 @@ type ProjectsStore = {
 
 const exampleProjects: Project[] = [
   {
-    id: "proj-1",
+    id: "1cf343d9-f8ff-45e5-a76b-1ae04dd8efff",
     name: "Brand Analysis Pipeline",
     description: "Automated brand sentiment analysis using multi-agent evaluation.",
     createdAt: "2026-07-08",
@@ -29,7 +29,7 @@ const exampleProjects: Project[] = [
     edges: makeDefaultEdges(),
   },
   {
-    id: "proj-2",
+    id: "2cf343d9-f8ff-45e5-a76b-1ae04dd8efff",
     name: "Content Strategy Engine",
     description: "Generates and evaluates content strategies across multiple channels.",
     createdAt: "2026-07-09",

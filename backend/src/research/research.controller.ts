@@ -39,13 +39,11 @@ export class ResearchController {
   }
 
   @Sse('runs/:runId/stream')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   streamRun(@Param('runId') runId: string): Observable<any> {
     return this.researchService.getRunEvents(runId).pipe(
       map((event) => ({
         data: event,
         id: `${Date.now()}`,
-        type: event.type,
       })),
     );
   }

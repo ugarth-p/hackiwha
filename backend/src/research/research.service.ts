@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { spawn } from 'child_process';
 import { join } from 'path';
-import { Subject } from 'rxjs';
+import { Subject, filter } from 'rxjs';
 import { RunPipelineDto } from './research.dto';
 import { PrismaService } from '@/modules/prisma/prisma.service';
 
@@ -21,7 +21,7 @@ export class ResearchService {
   constructor(private prisma: PrismaService) {}
 
   getRunEvents(runId: string) {
-    return this.pipelineEvents$.asObservable();
+    return this.pipelineEvents$.pipe(filter((event) => event.runId === runId));
   }
 
   async runPipeline(dto: RunPipelineDto) {
@@ -74,7 +74,7 @@ export class ResearchService {
   }
 
   private spawnWorker(runId: string, dto: RunPipelineDto): void {
-    const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+    const workersDir = join(__dirname, '..', '..', '..', 'workers');
     const workerPath = join(workersDir, 'main.py');
     const pythonBin = 'python3';
     const python = spawn(pythonBin, [workerPath], {

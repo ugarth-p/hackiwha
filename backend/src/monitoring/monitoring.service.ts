@@ -107,7 +107,7 @@ export class MonitoringService {
     inputData: Record<string, unknown>,
   ): Promise<MonitoringWorkerResult> {
     return new Promise((resolve, reject) => {
-      const workersDir = join(__dirname, '..', '..', '..', '..', 'workers');
+      const workersDir = join(__dirname, '..', '..', '..', 'workers');
       const workerPath = join(workersDir, 'main.py');
       const pythonBin = join(workersDir, '.venv', 'bin', 'python3');
       const python = spawn(pythonBin, [workerPath], {
