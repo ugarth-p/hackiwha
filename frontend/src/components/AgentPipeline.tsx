@@ -208,6 +208,7 @@ type AgentPipelineProps = {
   headerLeft?: React.ReactNode
   tenantId?: string
   businessDescription?: string
+  onStateChange?: (nodes: Node[], edges: Edge[]) => void
 }
 
 export function AgentPipeline({
@@ -215,6 +216,7 @@ export function AgentPipeline({
   headerLeft,
   tenantId,
   businessDescription,
+  onStateChange,
 }: AgentPipelineProps) {
   const [stageStates, setStageStates] = useState<StageState[]>(() => stages.map(() => "idle"))
   const [showQuickInput, setShowQuickInput] = useState(false)
@@ -302,7 +304,7 @@ export function AgentPipeline({
 
     setStageStates(["processing", "idle", "idle", "idle"])
 
-    triggerRef.current.mutate(
+    triggerMutation.mutate(
       {
         tenantId,
         businessDescription: desc,
@@ -332,7 +334,7 @@ export function AgentPipeline({
       .map((c) => c.trim())
       .filter(Boolean)
 
-    triggerRef.current.mutate(
+    triggerMutation.mutate(
       {
         tenantId,
         businessDescription: desc,
