@@ -1,5 +1,6 @@
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from google import genai
@@ -11,7 +12,7 @@ from embeddings import get_embedding
 from retry import generate_with_retry
 from tools import web_fetch, web_search
 
-_client = genai.Client(api_key=settings.gemini_api_key)
+_client = genai.Client(api_key=settings.gemini_api_key, http_options=genai.types.HttpOptions(timeout=30000))
 
 SYSTEM_PROMPT = """You are a Market Intelligence Agent. Your job is to research the GENERAL MARKET for a given business description.
 
@@ -54,10 +55,13 @@ def _build_search_context(business_description: str) -> str:
             if r["url"] not in sources:
                 sources.append(r["url"])
 
-    for r in collected[:3]:
-        if r["url"]:
+    targets = [r for r in collected[:3] if r["url"]]
+    with ThreadPoolExecutor(max_workers=min(len(targets), 3)) as pool:
+        futures = {pool.submit(web_fetch, r["url"]): r for r in targets}
+        for future in futures:
+            r = futures[future]
             try:
-                extracted = web_fetch(r["url"])
+                extracted = future.result()
                 if extracted:
                     r["content"] = extracted[:2000]
             except Exception:

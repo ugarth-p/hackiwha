@@ -14,7 +14,7 @@ def generate_with_retry(
     max_retries: int = 3,
     base_delay: float = 5.0,
 ) -> str:
-    """Call Gemini with retry on 429 RESOURCE_EXHAUSTED, returns response text."""
+    """Call Gemini with retry on 429 or transient errors, returns response text."""
     last_exc: Exception | None = None
     for attempt in range(max_retries):
         try:
@@ -24,11 +24,17 @@ def generate_with_retry(
                 config=config,
             )
             return response.text
-        except google_exceptions.ResourceExhausted as exc:
+        except (
+            google_exceptions.ResourceExhausted,
+            google_exceptions.ServiceUnavailable,
+            google_exceptions.DeadlineExceeded,
+            ConnectionError,
+            TimeoutError,
+        ) as exc:
             last_exc = exc
             delay = base_delay * (2 ** attempt)
             print(
-                f"[retry] Gemini rate-limited (attempt {attempt + 1}/{max_retries}), "
+                f"[retry] Gemini error {type(exc).__name__} (attempt {attempt + 1}/{max_retries}), "
                 f"waiting {delay:.1f}s...",
                 flush=True,
             )

@@ -60,7 +60,8 @@ export function usePipelineStream(
       } catch { /* ignore parse errors */ }
     };
     es.onerror = () => {
-      es.close();
+      // Let EventSource auto-reconnect instead of closing
+      console.warn("SSE connection error, will reconnect...");
     };
     return () => es.close();
   }, [runId]);

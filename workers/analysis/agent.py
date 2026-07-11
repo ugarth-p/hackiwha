@@ -12,7 +12,7 @@ from embeddings import get_embedding
 from retry import generate_with_retry
 from tools import web_fetch, web_search
 
-_client = genai.Client(api_key=settings.gemini_api_key)
+_client = genai.Client(api_key=settings.gemini_api_key, http_options=genai.types.HttpOptions(timeout=30000))
 
 SYSTEM_PROMPT = """You are a Competitor Reconnaissance Agent. Your job is to research specific competitors in a market.
 

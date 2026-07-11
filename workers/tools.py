@@ -4,6 +4,8 @@ from config import settings
 
 _client = None
 
+TAVILY_TIMEOUT = 20  # seconds
+
 
 def _get_client() -> TavilyClient:
     global _client
@@ -14,7 +16,10 @@ def _get_client() -> TavilyClient:
 
 def web_search(query: str, max_results: int = 5) -> list[dict]:
     client = _get_client()
-    response = client.search(query=query, max_results=max_results, search_depth="advanced")
+    response = client.search(
+        query=query, max_results=max_results,
+        search_depth="advanced", timeout=TAVILY_TIMEOUT,
+    )
     return [
         {"title": r["title"], "url": r["url"], "content": r["content"]}
         for r in response.get("results", [])
@@ -23,7 +28,7 @@ def web_search(query: str, max_results: int = 5) -> list[dict]:
 
 def web_fetch(url: str) -> str:
     client = _get_client()
-    response = client.extract(urls=[url])
+    response = client.extract(urls=[url], timeout=TAVILY_TIMEOUT)
     results = response.get("results", [])
     if results:
         return results[0].get("raw_content", "")

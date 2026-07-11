@@ -45,7 +45,6 @@ export class ResearchController {
       map((event) => ({
         data: event,
         id: `${Date.now()}`,
-        type: event.type,
       })),
     );
   }

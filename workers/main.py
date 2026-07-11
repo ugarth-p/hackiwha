@@ -1,4 +1,6 @@
 import json
+import os
+import signal
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -22,6 +24,14 @@ def run_pipeline(input_data: dict[str, Any]) -> None:
     business_description = input_data["business_description"]
     known_competitors = input_data.get("known_competitors", [])
     run_id = input_data.get("run_id") or create_run(tenant_id)
+
+    # Kill the worker if it exceeds pipeline_timeout
+    timeout = settings.pipeline_timeout
+    signal.signal(signal.SIGALRM, lambda *_: (
+        print(json.dumps({"step": "pipeline_timeout", "output": {"error": f"Pipeline exceeded {timeout}s timeout"}}), flush=True),
+        os._exit(1),
+    ))
+    signal.alarm(timeout)
 
     from scraping.agent import run as run_market_intel
     from analysis.agent import run as run_competitor_recon
