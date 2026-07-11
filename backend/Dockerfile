@@ -25,8 +25,6 @@ RUN apt-get update && \
         postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g pnpm
-
 WORKDIR /app
 
 # Copy built NestJS app
