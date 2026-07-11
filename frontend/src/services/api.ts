@@ -4,8 +4,6 @@ import type {
   MonitoringResult,
   RunPipelineDto,
   RunMonitoringDto,
-  PipelineEvent,
-  Tenant,
 } from "@/types/api";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "";

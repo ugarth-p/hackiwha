@@ -210,7 +210,6 @@ type AgentPipelineProps = {
   headerLeft?: React.ReactNode
   tenantId?: string
   businessDescription?: string
-  onStateChange?: (nodes: Node[], edges: Edge[]) => void
 }
 
 export function AgentPipeline({
@@ -218,7 +217,6 @@ export function AgentPipeline({
   headerLeft,
   tenantId,
   businessDescription,
-  onStateChange,
 }: AgentPipelineProps) {
   const [stageStates, setStageStates] = useState<StageState[]>(() => stages.map(() => "idle"))
   const [showQuickInput, setShowQuickInput] = useState(false)
@@ -235,7 +233,9 @@ export function AgentPipeline({
   const [quickInputCompetitors, setQuickInputCompetitors] = useState("")
 
   const triggerMutation = useTriggerPipeline()
-  const { data: findings } = useRunFindings(currentRunId)
+  const triggerRef = useRef(triggerMutation)
+  triggerRef.current = triggerMutation
+  useRunFindings(currentRunId)
 
   const activeStageIndex = useMemo(() => {
     const processingIndex = stageStates.findIndex((s) => s === "processing")
@@ -306,7 +306,7 @@ export function AgentPipeline({
 
     setStageStates(["processing", "idle", "idle", "idle"])
 
-    triggerMutation.mutate(
+    triggerRef.current.mutate(
       {
         tenantId,
         businessDescription: desc,
@@ -322,7 +322,7 @@ export function AgentPipeline({
         },
       },
     )
-  }, [tenantId, businessDescription, quickInputBusiness, quickInputCompetitors, triggerMutation])
+  }, [tenantId, businessDescription, quickInputBusiness, quickInputCompetitors])
 
   const handleQuickInputSubmit = useCallback(() => {
     setShowQuickInput(false)
@@ -336,7 +336,7 @@ export function AgentPipeline({
       .map((c) => c.trim())
       .filter(Boolean)
 
-    triggerMutation.mutate(
+    triggerRef.current.mutate(
       {
         tenantId,
         businessDescription: desc,
@@ -350,7 +350,7 @@ export function AgentPipeline({
         },
       },
     )
-  }, [quickInputBusiness, quickInputCompetitors, businessDescription, tenantId, triggerMutation])
+  }, [quickInputBusiness, quickInputCompetitors, businessDescription, tenantId])
 
   const toggleQuickInput = useCallback(() => {
     setShowQuickInput((c) => !c)
@@ -435,10 +435,6 @@ export function AgentPipeline({
       return mainEdges
     })
   }, [stageStates, activeStageIndex])
-
-  useEffect(() => {
-    onStateChange?.(nodes, edges)
-  }, [nodes, edges, onStateChange])
 
   const launchLabel = completedCount === stages.length ? "Relaunch Sequence" : "Launch Sequence"
 
